@@ -69,14 +69,12 @@
       ::-webkit-scrollbar-track { background: #FDF6E3; border-left: 2px solid #5C4033; }
       ::-webkit-scrollbar-thumb { background-color: #8B4513; border: 2px solid #5C4033; }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1"
   }
 }
 </script>
@@ -86,12 +84,1280 @@
       <div style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #5C4033; font-family: monospace;">
         <h2 style="font-size: 24px; margin-bottom: 20px;">Loading Adventure...</h2>
         <p>正在載入同人女大冒險...</p>
-        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(若長時間無反應，請確保您是在支援 ES Modules 的環境下執行)</p>
+        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(若長時間無反應，請確保網路正常以載入 CDN)</p>
       </div>
     </div>
     
     <!-- Main Application Logic - Combined into one file for stability -->
-    <!-- data-presets is CRITICAL for parsing TSX -->
-    <script type="text/babel" data-presets="typescript,react" src="./app.tsx"></script>
+    <script type="text/babel" data-presets="typescript,react">
+      const { useState, useEffect, useRef } = React;
+
+      // --- CONSTANTS ---
+      const TITLES = [
+        { lv: 1, name: "路過的村民", status: "手上只有一把生鏽的鋤頭", rank: "bronze", icon: "fa-user" },
+        { lv: 2, name: "除草工", status: "發現這片荒地有點大", rank: "bronze", icon: "fa-scissors" },
+        { lv: 3, name: "翻土學徒", status: "學會了如何不把土撒在自己身上", rank: "bronze", icon: "fa-trowel" },
+        { lv: 4, name: "種子收集員", status: "口袋裡裝滿了各種奇怪的腦洞", rank: "bronze", icon: "fa-seedling" },
+        { lv: 5, name: "萌芽觀察者", status: "盯著空白文檔發呆了一整天", rank: "bronze", icon: "fa-magnifying-glass" },
+        { lv: 6, name: "澆水小童", status: "用眼淚灌溉乾涸的糧倉", rank: "bronze", icon: "fa-droplet" },
+        { lv: 7, name: "初級農夫", status: "終於長出了一點綠色的東西", rank: "bronze", icon: "fa-plant-wilt" },
+        { lv: 8, name: "施肥專家", status: "雖然是玻璃渣但也是養分", rank: "bronze", icon: "fa-poop" },
+        { lv: 9, name: "捉蟲大隊", status: "消滅錯字，人人有責", rank: "bronze", icon: "fa-bug" },
+        { lv: 10, name: "見習冒險者", status: "終於走出了新手村", rank: "bronze", icon: "fa-person-hiking" },
+        { lv: 11, name: "腦洞記錄員", status: "筆記本比作品還厚", rank: "silver", icon: "fa-book-open" },
+        { lv: 12, name: "短篇練習生", status: "試著寫了一些沒頭沒尾的東西", rank: "silver", icon: "fa-pencil" },
+        { lv: 13, name: "塗鴉愛好者", status: "畫了火柴人並感到驕傲", rank: "silver", icon: "fa-paintbrush" },
+        { lv: 14, name: "深夜碼字工", status: "黑眼圈是努力的勳章", rank: "silver", icon: "fa-moon" },
+        { lv: 15, name: "北極圈居民", status: "這裡好冷，但我有愛", rank: "silver", icon: "fa-snowflake" },
+        { lv: 16, name: "自耕農", status: "自己產糧自己吃，真香", rank: "silver", icon: "fa-utensils" },
+        { lv: 17, name: "糧倉管理員", status: "開始有了少量的庫存", rank: "silver", icon: "fa-warehouse" },
+        { lv: 18, name: "小有名氣", status: "偶爾會收到路人的點讚", rank: "silver", icon: "fa-thumbs-up" },
+        { lv: 19, name: "催更受害者", status: "被讀者追著跑的感覺真好", rank: "silver", icon: "fa-person-running" },
+        { lv: 20, name: "熟練工", status: "產糧已經成為肌肉記憶", rank: "silver", icon: "fa-hammer" },
+        { lv: 21, name: "純愛戰士", status: "相信愛能戰勝一切OOC", rank: "gold", icon: "fa-heart" },
+        { lv: 22, name: "修羅場倖存者", status: "在截稿日前一秒滑壘成功", rank: "gold", icon: "fa-stopwatch" },
+        { lv: 23, name: "坑底釘子戶", status: "只要我不走，這坑就是熱的", rank: "gold", icon: "fa-anchor" },
+        { lv: 24, name: "同人煉金術師", status: "將妄想轉化為實體的魔術", rank: "gold", icon: "fa-flask" },
+        { lv: 25, name: "產糧大戶", status: "餵飽了一群嗷嗷待哺的雛鳥", rank: "gold", icon: "fa-bowl-food" },
+        { lv: 26, name: "糖分供給商", status: "你的作品甜到令人蛀牙", rank: "gold", icon: "fa-candy-cane" },
+        { lv: 27, name: "刀片批發商", status: "寄來的刀片足以蓋別墅", rank: "gold", icon: "fa-khanda" },
+        { lv: 28, name: "開車老司機", status: "車速太快，車門焊死了", rank: "gold", icon: "fa-taxi" },
+        { lv: 29, name: "全能創作者", status: "圖文雙修，恐怖如斯", rank: "gold", icon: "fa-layer-group" },
+        { lv: 30, name: "圈內大手", status: "名字開始在河道上流傳", rank: "gold", icon: "fa-hand-sparkles" },
+        { lv: 31, name: "心靈捕手", status: "精準戳中讀者的XP系統", rank: "plat", icon: "fa-bullseye" },
+        { lv: 32, name: "坑王之王", status: "挖坑不填，但是真香", rank: "plat", icon: "fa-person-digging" },
+        { lv: 33, name: "肝帝", status: "你的肝是指甲油做的嗎？", rank: "plat", icon: "fa-fire" },
+        { lv: 34, name: "人肉印表機", status: "產出速度比官方還快", rank: "plat", icon: "fa-print" },
+        { lv: 35, name: "官方逼死同人", status: "原作都沒你懂", rank: "plat", icon: "fa-book-skull" },
+        { lv: 36, name: "鎮圈神手", status: "你的ID就是糧食的保證", rank: "plat", icon: "fa-crown" },
+        { lv: 37, name: "同人活字典", status: "記得所有冷門設定", rank: "plat", icon: "fa-scroll" },
+        { lv: 38, name: "光之顯現", status: "你的作品照亮了黑暗的坑底", rank: "plat", icon: "fa-sun" },
+        { lv: 39, name: "信仰中心", status: "已經有人開始為你建立祭壇", rank: "plat", icon: "fa-place-of-worship" },
+        { lv: 40, name: "傳奇冒險者", status: "公會裡流傳著你的事蹟", rank: "plat", icon: "fa-dragon" },
+        { lv: 41, name: "半神", status: "脫離了低級趣味的存在", rank: "diamond", icon: "fa-cloud" },
+        { lv: 42, name: "宇宙觀測者", status: "看透了所有CP的本質", rank: "diamond", icon: "fa-eye" },
+        { lv: 43, name: "時間領主", status: "能操控截稿日的流動", rank: "diamond", icon: "fa-hourglass" },
+        { lv: 44, name: "因果律兵器", status: "筆下的BE能改變世界線", rank: "diamond", icon: "fa-meteor" },
+        { lv: 45, name: "妄想具現化", status: "想什麼就有什麼", rank: "diamond", icon: "fa-wand-magic-sparkles" },
+        { lv: 46, name: "愛之化身", status: "本身就是愛的聚合體", rank: "diamond", icon: "fa-heart-pulse" },
+        { lv: 47, name: "奇蹟創造者", status: "冷坑復興的希望", rank: "diamond", icon: "fa-star" },
+        { lv: 48, name: "永恆的筆尖", status: "只要你還在，圈子就不會死", rank: "diamond", icon: "fa-pen-fancy" },
+        { lv: 49, name: "次元觀測者", status: "打破了第四面牆", rank: "diamond", icon: "fa-cube" },
+        { lv: 50, name: "創世神", status: "你創造了這個宇宙，你就是規則", rank: "diamond", icon: "fa-infinity" }
+      ];
+
+      const ACHIEVEMENTS = [
+        { id: 'first_draw', icon: 'fa-pencil', name: '第一筆', desc: '完成首次繪圖' },
+        { id: 'first_write', icon: 'fa-pen-nib', name: '新篇章', desc: '完成首次寫作' },
+        { id: 'side_starter', icon: 'fa-shoe-prints', name: '試吃員', desc: '完成首次支線' },
+        { id: 'streak_3', icon: 'fa-fire', name: '熱身運動', desc: '連續完成任務 3 次' },
+        { id: 'level_5', icon: 'fa-star', name: '嶄露頭角', desc: '達到等級 5' },
+        { id: 'draw_10', icon: 'fa-palette', name: '塗鴉愛好者', desc: '繪圖累計 10 次' },
+        { id: 'draw_30', icon: 'fa-brush', name: '資深畫師', desc: '繪圖累計 30 次' },
+        { id: 'draw_50', icon: 'fa-paintbrush', name: '人肉印表機', desc: '繪圖累計 50 次' },
+        { id: 'write_10', icon: 'fa-book', name: '文豪降世', desc: '寫作累計 10 次' },
+        { id: 'write_30', icon: 'fa-feather', name: '多產作家', desc: '寫作累計 30 次' },
+        { id: 'write_50', icon: 'fa-keyboard', name: '鍵盤鋼琴家', desc: '寫作累計 50 次' },
+        { id: 'side_20', icon: 'fa-dice', name: '梗王', desc: '完成 20 個支線' },
+        { id: 'total_100', icon: 'fa-layer-group', name: '百人斬', desc: '總產出達到 100 份' },
+        { id: 'tentacle_monster', icon: 'fa-spider', name: '觸手怪', desc: '單日完成 3 份以上的產出' },
+        { id: 'streak_10', icon: 'fa-fire-flame-curved', name: '肝帝', desc: '連續完成任務 10 次' },
+        { id: 'streak_30', icon: 'fa-fire-burner', name: '鐵肝戰士', desc: '連續完成任務 30 次' },
+        { id: 'daily_checkin_30', icon: 'fa-calendar-days', name: '公會常駐民', desc: '累計打卡 30 天' },
+        { id: 'cp_devoted', icon: 'fa-heart-circle-check', name: '純情派', desc: '連續 5 次產出皆為相同 CP' },
+        { id: 'harem_master', icon: 'fa-users-line', name: '博愛黨', desc: '連續 5 次產出皆為不同 CP' },
+        { id: 'early_bird', icon: 'fa-sun', name: '早起鳥', desc: '在清晨 05:00-09:00 產出' },
+        { id: 'night_owl', icon: 'fa-moon', name: '修仙黨', desc: '在深夜 22:00-02:00 產出' },
+        { id: 'midnight_emo', icon: 'fa-cloud-moon-rain', name: '深夜網抑雲', desc: '在凌晨 02:00-05:00 產出' },
+        { id: 'blue_monday', icon: 'fa-face-tired', name: '週一症候群', desc: '在星期一產出以對抗憂鬱' },
+        { id: 'happy_friday', icon: 'fa-champagne-glasses', name: 'TGIF', desc: '在星期五產出迎接週末' },
+        { id: 'weekend_warrior', icon: 'fa-mug-hot', name: '週末戰士', desc: '在週六或週日產出' },
+        { id: 'procrastinator', icon: 'fa-stopwatch-20', name: '死線舞者', desc: '在週日 23:00 後提交當週任務' },
+        { id: 'r18_driver', icon: 'fa-car', name: '老司機', desc: '發布過 R-18 作品' },
+        { id: 'abyss_walker', icon: 'fa-dungeon', name: '深淵行者', desc: '累計發布 10 篇 R-18 作品' },
+        { id: 'pure_love', icon: 'fa-dove', name: '純愛戰神', desc: '發布過 5 篇 G 級 (全年齡) 作品' },
+        { id: 'saint', icon: 'fa-cross', name: '大聖女', desc: '累計發布 20 篇 G 級 (全年齡) 作品' },
+        { id: 'word_count_king', icon: 'fa-scroll', name: '萬字戶', desc: '單篇小說字數超過 10,000 字' },
+        { id: 'short_poet', icon: 'fa-feather-pointed', name: '短打詩人', desc: '單篇小說字數少於 500 字' },
+        { id: 'word_accumulator', icon: 'fa-sack-dollar', name: '字數大富翁', desc: '生涯總字數突破 50,000 字' },
+        { id: 'light_novelist', icon: 'fa-book-open-reader', name: '輕小說家', desc: '作品標題長度超過 15 個字' },
+        { id: 'naming_sense_zero', icon: 'fa-font', name: '取名廢', desc: '作品標題為「無題」或「Untitled」' },
+        { id: 'holiday_sniper', icon: 'fa-gift', name: '節日狙擊手', desc: '在特殊節日當天產出' },
+        { id: 'valentine_lover', icon: 'fa-heart-pulse', name: '情人節專屬', desc: '在 2/14 或 3/14 產出' },
+        { id: 'double_kill', icon: 'fa-clone', name: '魔武雙修', desc: '同一天完成繪圖與寫作' },
+        { id: 'balanced_diet', icon: 'fa-scale-balanced', name: '營養均衡', desc: '圖文產量皆超過 5 且差距小於 20%' },
+        { id: 'retro_gamer', icon: 'fa-clock-rotate-left', name: '時光旅人', desc: '使用補登功能提交 30 天前的作品' },
+        { id: 'reset_master', icon: 'fa-rotate-left', name: '洗點大師', desc: '使用過重置任務功能' },
+        { id: 'level_20', icon: 'fa-trophy', name: '獨當一面', desc: '達到等級 20' },
+        { id: 'level_30', icon: 'fa-gem', name: '鎮圈之寶', desc: '達到等級 30' },
+        { id: 'level_40', icon: 'fa-crown', name: '傳奇人物', desc: '達到等級 40' },
+        { id: 'level_50', icon: 'fa-sun', name: '創世神', desc: '達到等級 50' },
+        { id: 'achievement_hunter', icon: 'fa-medal', name: '大滿貫', desc: '解鎖 50 個榮譽勳章' },
+        { id: 'speed_runner', icon: 'fa-bolt', name: '光速產糧', desc: '在週一就完成週繪圖任務' },
+        { id: 'berserker', icon: 'fa-gavel', name: '狂戰士', desc: '單月總字數突破 30,000' },
+        { id: 'archmage', icon: 'fa-hat-wizard', name: '大魔導師', desc: '支線任務累計完成 30 次' },
+        { id: 'necromancer', icon: 'fa-skull', name: '死靈法師', desc: '補登了一年前的舊稿' },
+        { id: 'bard', icon: 'fa-music', name: '吟遊詩人', desc: '寫作累計 50 次' },
+        { id: 'assassin', icon: 'fa-user-ninja', name: '暗殺者', desc: '在凌晨 03:00-04:00 更新' },
+        { id: 'paladin', icon: 'fa-shield', name: '守護者', desc: '連續 10 次產出無 R-18 內容' },
+        { id: 'merchant', icon: 'fa-coins', name: '地精商人', desc: '總產出次數達到 88 次' },
+        { id: 'legend', icon: 'fa-dragon', name: '傳說', desc: '等級 50 且成就 40 個' },
+        { id: 'lunch_break', icon: 'fa-burger', name: '午休摸魚', desc: '在 12:00-13:00 產出' },
+        { id: 'workday_hero', icon: 'fa-briefcase', name: '薪水小偷', desc: '平日上班時間 (09-17) 產出' }
+      ];
+
+      const SPICY_QUOTES = [
+        "如果不由你寫你的CP，誰還會幫你寫呢？", "你的推在哭，因為你還沒寫完他們的 Happy Ending。", 
+        "坑填了嗎？還敢滑推特啊？", "自耕農是沒有休息日的。", "官方發糖是官方的，你自己產的才是真的。", 
+        "看別人的糧是為了活下去，自己產糧是為了證明活過。", "截稿日是第一生產力。", "為了那碟醋(CP)，包了這頓餃子(產糧)。",
+        "不要問官方給了什麼，要問你為CP做了什麼。", "用愛發電，全年無休。", "R18是人類文明的瑰寶，請多產出。",
+        "拖延症是絕症，唯有截稿日可醫。", "每一筆都是對CP的告白。", "你的CP在冷風中裸奔，因為你還沒畫衣服。",
+        "餓死事小，拆逆事大，快去產糧護航！", "狼若回頭，必有緣由；不是報恩，就是想吃肉(產糧)。",
+        "雖然很冷，但這對CP是真的！", "今天的你，產糧了嗎？", "你的草稿在哭泣，聽見了嗎？",
+        "再不畫完，手感就要離家出走了。", "隔壁棚的糧都滿出來了，你還在摸魚？",
+        "只要膽子大，每日都是情人節。", "清水文雖然健康，但偶爾也想吃肉啊。", "你的讀者正在刷F5等你更新。",
+        "坑而不填，此恨綿綿無絕期。", "今天少寫一行，明天火葬場。", "修羅場是檢驗真愛的唯一標準。",
+        "熬夜一時爽，一直熬夜...火葬場見。", "肝臟在燃燒，那是愛的火花。", "不管是BE還是HE，寫出來就是好E。"
+      ];
+
+      const PROMPTS = [
+        "相擁入眠", "一同外出購物", "半夜一起看恐怖電影", "一方的起床氣", "烹飪/下廚", "大掃除", "瀏覽過往照片", 
+        "吐嘈對方的生活習慣", "相隔兩地的電話", "早安吻", "替對方挑衣服", "討論關於寵物話題", "一方臥病在床", 
+        "午睡", "幫對方吹頭髮", "出浴後的怦然心動", "慶祝某個紀念日", "接對方回家", "離家出走", "一個驚喜", 
+        "屋頂上觀星", "一場飛來橫禍", "討論關於孩子問題", "因惡劣天氣被困在家", "喝醉", "無傷大雅的打打鬧鬧", 
+        "穿錯衣服", "一方受輕傷", "意外的求婚", "滾床單", "兩個人一起逛街", "兩個人在沒有空調的房間裡擁抱睡覺", 
+        "兩個人打一個小時的電話", "兩個人分別之後見面的第一件事情", "給彼此洗澡", "每天表白一次", "生日那天親自下廚", 
+        "辦一場盛大的婚禮", "兩個人的野營", "情敵被兩人共同打退", "信任", "親吻", "床上的情話", "給對方起外號", 
+        "一起填滿一整個暑假", "撒嬌", "永遠不被拒絕", "為了對方去做一件事情", "廚房裡的誘惑", "清晨的早安吻", 
+        "偷偷定制的戒指", "花粉過敏卻依然會接受的花", "迷路之後的火速到達", "吃寵物的醋", "兩個人的情侶照", 
+        "鼓起勇氣帶對方回家", "偶爾的反攻", "一起裝修房子", "在夢裡偷偷遇見", "一直一直在一起",
+        "顫動的指尖正微微發燙", "後知後覺的撒嬌", "突如其來的熱視線", "維他命不需要哦！", "你的體溫", 
+        "第一次的晚安吻", "既丟臉又害羞的約會", "安靜的幸福進行式", "心跳聲無限放大", "笨拙的我們", 
+        "伴隨花束一起送出的心意", "請再說一次吧？", "戀愛ing", "為你寫詩", "紅茶與提拉米蘇", "當呼吸化為喘息", 
+        "無法拒絕的可愛請求", "收集不完的溫柔", "挨近了你的唇", "圖書館裡的戀愛習題", "反覆無常的甜蜜刺激", 
+        "雨天製造的親密距離", "鼻子蹭過來了！", "耳邊的呢喃", "表情犯規", "桌子下的小動作", "交換日記", 
+        "睡顏誘惑", "被窩裡的情歌", "腳趾纏繞", "眼角的淚痣", "丹鳳眼／眼線", "仰頭喝水時上下滾動的喉結", 
+        "微揚起頭時的頸線", "白皙的後頸", "微含著櫻桃／草莓的嘴唇", "曲線美好的後背", "濕漉漉的頭髮", 
+        "下雨天貼在身上的襯衫", "露出鎖骨的領口", "隔著衣物挺起的乳頭", "脫衣服時掀起到一半", "伸懶腰時露出的側腰線", 
+        "低腰褲和人魚線", "含住冰棒", "幫對方舔去衣服上的冰淇淋／牛奶／蛋糕", "微抿盛著紅酒的高腳杯", 
+        "吮吸對方的手指", "酒醉之後潮紅的臉頰", "夾起瀏海的髮夾", "慵懶的陷進沙發", "夾菸的手指", 
+        "用牙齒替對方拉開拉鍊", "沐浴後還未擦乾身上的水珠", "處理傷口時壓抑的呻吟", "在耳邊漫語的低音", 
+        "貼在曖昧位置的創可貼", "肩上的咬痕／背上的抓痕", "刮得乾淨／略帶鬍渣的下巴", "在大腿內側刺青",
+        "初次拜訪", "冰箱上的留言", "成對的咖啡杯", "購物", "穿用對方的東西", "誤會", "戀人的背影", "故地重游", 
+        "拿手菜", "搬家", "合影", "紀念日", "被拒絕的要求", "旅行", "牽手", "手機裡的錄音", "看電影", 
+        "用同一副餐具吃東西", "依偎", "心電感應", "小矛盾", "遷就", "燭光晚餐", "遺囑", "裝飾品", "情書", 
+        "壞習慣", "第一次心動", "眼淚", "約定", "一杯可樂，兩支吸管", "睡著的貓和他", "遲到五分鐘", 
+        "撩起瀏海後落於額上的親吻", "床單要綠色還是藍色？", "領帶歪了", "「我忘了拿浴巾」", "永不忘的手機號碼", 
+        "不得已的大掃除", "「猜猜我是誰？」", "路燈下親吻的影子", "十指交扣", "二重奏", "哭泣時覆上眼的手", 
+        "小地震時的緊緊相擁", "親手剪髮", "我回來了", "偶爾蹦出的粗口", "只有一間單人房", "在原地等待", 
+        "視頻通話中熟悉的笑容", "Yes，I do", "握著手機時轉身看見", "海灣吻痕", "翻閱過去的相冊", "雨後日光下的河", 
+        "帶你遠行", "相隔兩地的長途電話", "百年後用時間見證",
+        "有鏡頭在", "噓，別出聲", "眼神", "不要再讓我當你們兩個的擋箭牌啦", "天黑才能抱住你", "見光死", 
+        "被發現了嗎", "全世界查無此人", "問起你的話，就說你是—--", "把你藏在衣櫃", "只有我能看到你/其他人看不到我", 
+        "不要告訴他/他不知道的事", "熟悉的陌生人", "課桌下的牽手", "陌生號碼來電", "敵在明我在暗", "謊言", 
+        "雙重人格", "背後", "觸不到的你", "第二身份", "私下約定好在大眾面前做同樣的事，悄悄的，也會滿足", 
+        "短信刪除", "私密文件夾", "一前，一後", "在心裡偷笑", "相對全世界大聲介紹你", "臆想症", "我們只是朋友", 
+        "你真的存在嗎",
+        "Prologue 序言", "Xanthe 桑席", "Amaranthine 不凋的", "Caress 愛撫", "Toxic 有毒的", "Farewell 再會", 
+        "Ash 灰燼", "Misty 淚眼迷蒙", "Kalmia 山月桂", "Miserable 悲慘的", "Tears 眼淚", "Lovebite 愛痕", 
+        "Doomsday 世界末日", "illuminati 先覺者", "Lapis 寶石", "Angelfish 神仙魚", "Mirror 鏡子", "Paradise 天堂", 
+        "Sheen 發光", "Fever 發燒", "Iris 鳶尾", "Panacea 萬靈藥", "Cageling 籠中鳥", "Zendic 無神論者", 
+        "Zephyr 和風", "Zoanthropy 變獸妄想", "ZOE 生命", "Twins 雙子", "Sorrow 悲傷", "Debaucher 墮落者", 
+        "Slave 奴隸", "Dear 親愛的", "Virulence 劇毒", "Ashtray 煙灰缸", "Vampire 吸血鬼", "Debonair 無憂無慮的", 
+        "Beastliness 獸性", "Grave 墓穴", "Saint 聖徒", "Goodbye 再見", "Ephemeral 短暫的", "Reverie 幻想", 
+        "Serenade 小夜曲", "Rapture 狂喜", "Covenant 誓約", "Euphoria 欣快", "Entwine 纏繞", "Melancholia 憂鬱", 
+        "Elegy 輓歌", "Requiem 安魂曲", "Lament 悲嘆", "Oblivion 遺忘", "Revenant 歸來者", "Nocturne 夜曲", 
+        "Threnody 悲歌", "Ethereal 空靈的", "Labyrinth 迷宮", "Eclipse 蝕", "Seraphim 熾天使", "Siren 海妖", 
+        "Serpent 蛇", "Tempest 暴風雨", "Oleander 夾竹桃", "Belladonna 顛茄", "Dahlia 大理花", "Gossamer 蛛絲", 
+        "Nebula 星雲", "Vesper 晚禱", "Crimson 深紅", "Scarlet 猩紅色", "Vermillion 朱紅", "Obsidian 黑曜石", 
+        "Amber 琥珀", "Velvet 天鵝絨", "Iridescent 彩虹色的", "Vertigo 眩暈", "Languor 倦怠", "Lunacy 瘋狂", 
+        "Lachrymose 愛哭的", "Solace 慰藉", "Ardor 熱情", "Adoration 崇拜", "Devotion 奉獻", "Longing 渴望", 
+        "Yearning 懷念", "Ecstasy 狂喜", "Intoxicate 使陶醉", "Temptation 誘惑", "Obsession 迷戀", "Mortality 必死性", 
+        "Perish 消亡", "Sepulcher 墳墓", "Crypt 地下墓室", "Epitaph 墓誌銘", "Pyre 火葬用的柴堆", "Wither 枯萎", 
+        "Decay 腐朽", "Cadaver 屍體", "Elysium 極樂世界", "Arcane 神秘的", "Enigma 謎", "Oracle 神諭", "Chimera 奇想", 
+        "Phoenix 鳳凰", "Sphinx 斯芬克斯", "Nymph 仙女", "Succubus 女夢魔", "Lotus 蓮花", "Lilac 紫丁香", "Peony 牡丹", 
+        "Camellia 山茶花", "Wisteria 紫藤", "Anemone 銀蓮花", "Hyacinth 風信子", "Hemlock 毒芹", "Eternity 永恆", 
+        "Infinity 無限", "Perpetual 永久的", "Timeless 永恆的", "Moment 瞬間", "Anguish 極度痛苦", "Despair 絕望", 
+        "Bliss 極樂", "Serenity 寧靜", "Turmoil 混亂", "Fragile 脆弱的", "Torment 折磨", "Agony 極度痛苦", 
+        "Affliction 苦惱", "Sanctuary 避難所", "Enchantment 魔力", "Allure 誘惑力", "Mesmerize 施催眠術", 
+        "Captivate 迷住", "Bewitching 迷人的", "Glamour 魅力", "Exquisite 精緻的", "Sublime 崇高的", "Delicate 精緻的", 
+        "Radiance 光輝"
+      ];
+
+      const CHALLENGES = [
+        "【限制】全程只使用對話描寫，不使用任何引號。", "【視角】從路人/物品(如咖啡杯)的視角旁觀這一切。", 
+        "【氛圍】將原本溫馨的梗寫成恐怖/懸疑風格。", "【AU設定】哨兵嚮導設定，一方正處於結合熱/神游。", 
+        "【AU設定】花吐症設定，一方隱瞞病情。", "【AU設定】ABO設定，在抑制劑失效的時候。", 
+        "【反轉】故事的結尾必須推翻開頭的認知。", "【感官】重點描寫氣味與聲音，忽略視覺描寫。", 
+        "【時間】發生在分手後/決裂後的重逢時刻。", "【時間】倒敘法，從結局開始往前推。", 
+        "【情境】兩人被手銬/魔法強制銬在一起無法分開。", "【情境】一方失憶，另一方試圖喚醒記憶(或隱瞞)。", 
+        "【情境】一方變成了動物(貓/狗/兔子)。", "【情境】只有一個人記得對方，另一個人完全陌生。",
+        "【風格】用童話寓言的筆觸來寫這個梗。"
+      ];
+
+      const DEFAULT_HOLIDAYS = [
+        { date: '01-14', name: '日記情人節', type: 'love' }, { date: '01-31', name: '愛妻日', type: 'love' },
+        { date: '02-02', name: '雙馬尾之日', type: 'fun' }, { date: '02-14', name: '西洋情人節', type: 'love' }, 
+        { date: '02-22', name: '貓咪日', type: 'fun' },
+        { date: '03-03', name: '女兒節', type: 'fun' }, { date: '03-14', name: '白色情人節', type: 'love' },
+        { date: '04-14', name: '黑色情人節', type: 'fun' }, { date: '04-22', name: '好夫婦日', type: 'love' },
+        { date: '05-10', name: '女僕之日', type: 'fun' }, { date: '05-14', name: '玫瑰情人節', type: 'love' }, 
+        { date: '05-23', name: '接吻之日', type: 'love' },
+        { date: '06-14', name: '親吻情人節', type: 'love' }, { date: '06-25', name: '百合之日', type: 'love' },
+        { date: '07-07', name: '馬尾之日/七夕', type: 'love' }, { date: '07-14', name: '銀色情人節', type: 'love' },
+        { date: '08-02', name: '兔女郎之日', type: 'fun' }, { date: '08-09', name: '擁抱之日', type: 'love' }, 
+        { date: '08-14', name: '綠色情人節', type: 'love' }, { date: '08-21', name: '兔女郎之日(2)', type: 'fun' },
+        { date: '09-06', name: '妹妹之日', type: 'fun' }, { date: '09-14', name: '相片情人節', type: 'love' }, 
+        { date: '09-17', name: '告白日', type: 'love' }, { date: '09-29', name: '招財貓日', type: 'fun' },
+        { date: '10-01', name: '眼鏡之日', type: 'fun' }, { date: '10-11', name: '眨眼之日', type: 'fun' }, 
+        { date: '10-14', name: '紅酒情人節', type: 'love' }, { date: '10-30', name: '初戀之日', type: 'love' }, 
+        { date: '10-31', name: '萬聖節', type: 'fun' },
+        { date: '11-01', name: '犬之日', type: 'fun' }, { date: '11-02', name: '褲襪之日', type: 'fun' }, 
+        { date: '11-11', name: 'Pocky日', type: 'fun' }, { date: '11-14', name: '電影情人節', type: 'love' }, 
+        { date: '11-22', name: '好夫婦日', type: 'love' }, { date: '11-28', name: '好膝上襪日', type: 'fun' }, 
+        { date: '11-29', name: '好肉日', type: 'fun' },
+        { date: '12-14', name: '擁抱情人節', type: 'love' }, { date: '12-25', name: '聖誕節', type: 'love' }
+      ];
+
+      const BGM_LIST = [
+        { artist: "YOASOBI", title: "Racing Into The Night", type: "JP" }, { artist: "YOASOBI", title: "Idol", type: "JP" },
+        { artist: "Ado", title: "Usseewa", type: "JP" }, { artist: "LiSA", title: "Gurenge", type: "JP" },
+        { artist: "Kenshi Yonezu", title: "Lemon", type: "JP" }, { artist: "Official HIGE DANdism", title: "Pretender", type: "JP" },
+        { artist: "Mrs. GREEN APPLE", title: "Inferno", type: "JP" }, { artist: "Aimer", title: "Kataomoi", type: "JP" },
+        { artist: "Aimyon", title: "Marigold", type: "JP" }, { artist: "RADWIMPS", title: "Sparkle", type: "JP" },
+        { artist: "King Gnu", title: "Hakujitsu", type: "JP" }, { artist: "Eve", title: "Kaikai Kitan", type: "JP" },
+        { artist: "Vaundy", title: "Odoriko", type: "JP" }, { artist: "Fujii Kaze", title: "Shinunoga E-Wa", type: "JP" },
+        { artist: "Linked Horizon", title: "Shinzou wo Sasageyo", type: "JP" }, { artist: "TK from Ling tosite sigure", title: "Unravel", type: "JP" },
+        { artist: "Hikaru Utada", title: "First Love", type: "JP" }, { artist: "Tatsuro Yamashita", title: "Plastic Love", type: "JP" },
+        { artist: "Miki Matsubara", title: "Mayonaka no Door", type: "JP" }, { artist: "Miku Hatsune", title: "World is Mine", type: "JP" },
+        { artist: "One OK Rock", title: "The Beginning", type: "JP" }, { artist: "Gen Hoshino", title: "Koi", type: "JP" },
+        { artist: "NewJeans", title: "Hype Boy", type: "KR" }, { artist: "LE SSERAFIM", title: "ANTIFRAGILE", type: "KR" },
+        { artist: "IVE", title: "LOVE DIVE", type: "KR" }, { artist: "aespa", title: "Next Level", type: "KR" },
+        { artist: "BTS", title: "Dynamite", type: "KR" }, { artist: "BLACKPINK", title: "DDU-DU DDU-DU", type: "KR" },
+        { artist: "TWICE", title: "TT", type: "KR" }, { artist: "Red Velvet", title: "Psycho", type: "KR" },
+        { artist: "EXO", title: "Love Shot", type: "KR" }, { artist: "SEVENTEEN", title: "Don't Wanna Cry", type: "KR" },
+        { artist: "BIGBANG", title: "BANG BANG BANG", type: "KR" }, { artist: "IU", title: "LILAC", type: "KR" },
+        { artist: "Taeyeon", title: "INVU", type: "KR" }, { artist: "Zico", title: "Any Song", type: "KR" },
+        { artist: "Taylor Swift", title: "Anti-Hero", type: "EN" }, { artist: "Ariana Grande", title: "7 rings", type: "EN" },
+        { artist: "Billie Eilish", title: "bad guy", type: "EN" }, { artist: "Olivia Rodrigo", title: "drivers license", type: "EN" },
+        { artist: "Dua Lipa", title: "Levitating", type: "EN" }, { artist: "Lady Gaga", title: "Bad Romance", type: "EN" },
+        { artist: "Ed Sheeran", title: "Shape of You", type: "EN" }, { artist: "Bruno Mars", title: "Uptown Funk", type: "EN" },
+        { artist: "The Weeknd", title: "Blinding Lights", type: "EN" }, { artist: "Harry Styles", title: "As It Was", type: "EN" },
+        { artist: "Hitsujibungaku", title: "more than words", type: "JP" }, { artist: "Saucy Dog", title: "Cinderella Boy", type: "JP" },
+        { artist: "Yorushika", title: "Spring Thief", type: "JP" }, { artist: "Hyukoh", title: "Wi Ing Wi Ing", type: "KR" },
+        { artist: "Se So Neon", title: "Nan Chun", type: "KR" }, { artist: "Arctic Monkeys", title: "505", type: "EN" },
+        { artist: "Cigarettes After Sex", title: "Apocalypse", type: "EN" }, { artist: "Men I Trust", title: "Show Me How", type: "EN" }
+      ];
+
+      // --- COMPONENTS ---
+
+      // Common Components
+      const PixelCard = ({ children, className = "", noPadding = false }) => (
+        <div className={`bg-farm-card border-4 border-farm-border shadow-pixel ${className}`}>
+          {children}
+        </div>
+      );
+
+      const PixelBtn = ({ children, onClick, className = "", disabled = false, fullWidth = false }) => (
+        <button 
+          onClick={onClick}
+          disabled={disabled}
+          className={`
+            relative border-4 border-farm-border font-bold uppercase tracking-widest transition-all text-sm font-pixel
+            ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-300 text-gray-500' : 'active:translate-x-1 active:translate-y-1 active:shadow-none cursor-pointer hover:brightness-110'}
+            ${fullWidth ? 'w-full' : ''}
+            ${!disabled ? 'shadow-pixel' : ''}
+            ${className}
+          `}
+        >
+          {children}
+        </button>
+      );
+
+      const PixelInput = (props) => (
+        <input 
+          {...props}
+          className="w-full bg-[#FFFBF0] border-2 border-farm-border p-2 font-pixel text-sm outline-none focus:bg-[#fffbe6] focus:border-[#6DA34D] transition-colors placeholder-[#8C7B65]"
+        />
+      );
+
+      const PixelTextArea = (props) => (
+        <textarea 
+          {...props}
+          className="w-full bg-[#FFFBF0] border-2 border-farm-border p-2 font-pixel text-sm outline-none focus:bg-[#fffbe6] focus:border-[#6DA34D] transition-colors placeholder-[#8C7B65]"
+        />
+      );
+
+      const Toast = ({ message, show }) => (
+        <div className={`fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-[#5C4033] border-4 border-[#E8DCCA] text-[#E8DCCA] px-6 py-4 shadow-pixel transition-all duration-300 z-50 flex items-center gap-4 pointer-events-none ${show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <i className="fa-solid fa-angles-up text-2xl animate-bounce text-yellow-400"></i>
+          <div className="flex flex-col">
+            <span className="text-xs text-yellow-400 font-retro">SYSTEM</span>
+            <span className="text-lg font-bold font-pixel">{message}</span>
+          </div>
+        </div>
+      );
+
+      // Task Components
+      const ArtTask = ({ appState, onOpenModal, onReset, spicyQuote }) => {
+        const [timeLeft, setTimeLeft] = useState("");
+        const [progress, setProgress] = useState(0);
+
+        useEffect(() => {
+          const calc = () => {
+            const now = new Date();
+            const targetSat = new Date(now);
+            targetSat.setDate(now.getDate() + ((7 - now.getDay()) % 7 === 0 ? 6 : (6 - now.getDay())));
+            targetSat.setHours(23, 59, 59);
+            const ms = targetSat.getTime() - now.getTime();
+            const total = 604800000; // 7 days
+            
+            if (ms < 0) {
+              setTimeLeft("已截止");
+              setProgress(100);
+            } else {
+              const d = Math.floor(ms / 86400000);
+              const h = Math.floor((ms % 86400000) / 3600000);
+              setTimeLeft(`${d}天 ${h}時`);
+              setProgress(Math.max(0, Math.min(100, ((total - ms) / total) * 100)));
+            }
+          };
+          calc();
+          const int = setInterval(calc, 60000);
+          return () => clearInterval(int);
+        }, []);
+
+        return (
+          <PixelCard className="relative group p-0 overflow-visible">
+            <div className="bg-stone-800 text-white px-4 py-2 border-b-4 border-[#433422] flex justify-between items-center">
+              <span className="font-bold flex items-center gap-2 text-pink-300"><i className="fa-solid fa-palette"></i> WEEKLY ART</span>
+              <span className="text-xs text-yellow-400 font-retro">REWARD: 150XP</span>
+            </div>
+            <div className="p-6 relative">
+               <div className="absolute -top-3 -right-3 max-w-[60%] text-right z-10">
+                  <span className="bg-red-500 text-white text-xs px-2 py-1 border-2 border-black transform rotate-2 inline-block shadow-pixel-sm font-bold">{spicyQuote}</span>
+              </div>
+              <h2 className="text-2xl font-bold mb-1 text-[#433422]">每週產糧耕作</h2>
+              <div className="mb-6">
+                <div className="w-full h-6 bg-[#C0A080] border-4 border-[#433422] relative">
+                  <div style={{ width: appState.draw.done ? '100%' : `${progress}%` }} className={`h-full border-r-4 border-[#433422] transition-all duration-1000 ${appState.draw.done ? 'bg-green-500' : 'bg-pink-500'}`}></div>
+                </div>
+                <div className="flex justify-between text-xs mt-2 font-bold text-[#8C7B65]">
+                  <span>STATUS: <span className={appState.draw.done ? 'text-green-600' : 'text-[#8C7B65]'}>{appState.draw.done ? '完成' : '進行中'}</span></span>
+                  <span className="text-red-600">{appState.draw.done ? '已入庫' : timeLeft}</span>
+                </div>
+              </div>
+              <PixelBtn 
+                fullWidth 
+                onClick={() => onOpenModal('draw')} 
+                disabled={appState.draw.done}
+                className={appState.draw.done ? "bg-green-600 text-white border-green-800" : "bg-pink-500 text-white border-pink-700"}
+              >
+                {appState.draw.done ? <><i className="fa-solid fa-check"></i> 作物已入庫</> : <><i className="fa-solid fa-upload"></i> 提交繪圖</>}
+              </PixelBtn>
+              <button onClick={() => onReset('draw')} className="w-full mt-2 text-[#8C7B65] text-xs hover:text-[#433422] py-2">
+                  <i className="fa-solid fa-rotate-left"></i> 重置任務狀態
+              </button>
+            </div>
+          </PixelCard>
+        );
+      };
+
+      const WritingTask = ({ appState, onOpenModal, onReset, spicyQuote }) => {
+        const [phase, setPhase] = useState({ title: "", desc: "", p: 0 });
+
+        useEffect(() => {
+          const now = new Date();
+          const day = now.getDate();
+          const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          let title = "Week 1: 起步期", desc = "目標 1250 字。";
+          if (day > 7) { title = "Week 2: 發展期"; desc = "目標 2500 字。"; }
+          if (day > 14) { title = "Week 3: 高潮期"; desc = "目標 3750 字。"; }
+          if (day > 21) { title = "Week 4: 收尾期"; desc = "目標 5000 字。"; }
+          setPhase({ title, desc, p: (day / totalDays) * 100 });
+        }, []);
+
+        return (
+          <PixelCard className="relative group p-0">
+             <div className="bg-stone-800 text-white px-4 py-2 border-b-4 border-[#433422] flex justify-between items-center">
+              <span className="font-bold flex items-center gap-2 text-blue-300"><i className="fa-solid fa-book"></i> MONTHLY NOVEL</span>
+              <span className="text-xs text-yellow-400 font-retro">REWARD: 500XP</span>
+            </div>
+            <div className="p-6 relative">
+               <div className="absolute -top-3 -right-3 max-w-[60%] text-right z-10">
+                  <span className="bg-blue-600 text-white text-xs px-2 py-1 border-2 border-black transform -rotate-1 inline-block shadow-pixel-sm font-bold">{spicyQuote}</span>
+              </div>
+              <div className="flex justify-between items-end mb-2">
+                  <h2 className="text-2xl font-bold text-[#433422]">月度小說更新</h2>
+              </div>
+              <div className="mb-2">
+                  <div className="w-full h-8 bg-[#C0A080] border-4 border-[#433422] flex relative">
+                      {[1,2,3,4].map(w => (
+                        <div key={w} className="w-1/4 h-full border-r-2 border-[#8C7B65] flex items-center justify-center text-[10px] z-10 mix-blend-multiply text-[#433422]">W{w}</div>
+                      ))}
+                      <div style={{ width: appState.write.done ? '100%' : `${phase.p}%` }} className={`absolute top-0 left-0 h-full border-r-4 border-[#433422] transition-all duration-1000 ${appState.write.done ? 'bg-green-500' : 'bg-blue-500 opacity-80'}`}></div>
+                  </div>
+              </div>
+              <div className="bg-blue-50 border-2 border-blue-200 p-3 mb-6 flex items-start gap-3">
+                  <i className="fa-solid fa-circle-info text-blue-500 mt-1"></i>
+                  <div>
+                      <div className="text-xs font-bold text-blue-800 mb-1">{phase.title}</div>
+                      <div className="text-xs text-blue-600">{phase.desc}</div>
+                  </div>
+              </div>
+              <PixelBtn 
+                fullWidth 
+                onClick={() => onOpenModal('write')} 
+                disabled={appState.write.done}
+                className={appState.write.done ? "bg-green-600 text-white border-green-800" : "bg-blue-500 text-white border-blue-700"}
+              >
+                {appState.write.done ? <><i className="fa-solid fa-check"></i> 作物已入庫</> : <><i className="fa-solid fa-file-word"></i> 提交文章</>}
+              </PixelBtn>
+              <button onClick={() => onReset('write')} className="w-full mt-2 text-[#8C7B65] text-xs hover:text-[#433422] py-2">
+                  <i className="fa-solid fa-rotate-left"></i> 重置任務狀態
+              </button>
+            </div>
+          </PixelCard>
+        );
+      };
+
+      const SideQuestTask = ({ appState, onOpenModal, onRefreshSideQuest }) => {
+        return (
+          <PixelCard className="p-0">
+            <div className="bg-purple-800 text-white px-4 py-2 border-b-4 border-[#433422] flex justify-between items-center">
+                <span className="font-bold flex items-center gap-2 text-purple-200"><i className="fa-solid fa-flask"></i> 靈感煉金術</span>
+                <span className="text-xs text-yellow-400 font-retro">+50XP</span>
+            </div>
+            <div className="p-6 bg-purple-50">
+                <div className="flex flex-col gap-4">
+                    <div className="border-4 border-[#433422] bg-white shadow-pixel-sm p-4 relative">
+                        <div className="absolute -top-3 left-3 bg-black text-white px-2 py-0.5 text-xs font-bold transform -rotate-1">CURRENT PROMPT</div>
+                        <div className="mt-2 space-y-3">
+                            <div className="flex items-start gap-3">
+                                <div className="bg-purple-200 text-purple-900 font-bold px-2 py-1 text-xs border-2 border-black min-w-[60px] text-center mt-1">題目</div>
+                                <div className="text-lg font-bold text-[#433422] border-b-2 border-[#E8DCCA] pb-1 w-full">{appState.side.text || "--"}</div>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <div className="bg-yellow-200 text-yellow-900 font-bold px-2 py-1 text-xs border-2 border-black min-w-[60px] text-center mt-1">挑戰</div>
+                                <div className="text-sm font-bold text-[#6D5A45] w-full leading-6">{appState.side.concept || "--"}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-4">
+                        <PixelBtn onClick={onRefreshSideQuest} className="w-1/3 bg-[#C0A080] border-[#8C7B65] text-white text-sm"><i className="fa-solid fa-rotate"></i> 重骰</PixelBtn>
+                        <PixelBtn 
+                          onClick={() => onOpenModal('side')} 
+                          disabled={appState.side.done}
+                          className={`w-2/3 ${appState.side.done ? 'bg-stone-500 border-stone-600' : 'bg-purple-600 border-purple-800'} text-white`}
+                        >
+                           {appState.side.done ? '已完成' : <><i className="fa-solid fa-check"></i> 接受挑戰</>}
+                        </PixelBtn>
+                    </div>
+                </div>
+            </div>
+          </PixelCard>
+        );
+      };
+
+      // Dashboard Components
+      const Header = ({ appState, currentTitle }) => {
+        return (
+          <div className="w-full max-w-5xl mb-6 relative">
+             <div className="p-4 bg-[#5C4033] border-4 border-[#433422] shadow-[6px_6px_0_0_rgba(67,52,34,0.5)] text-[#FFFBF0] mb-4 text-center transform -rotate-1">
+                  <h1 className="text-xl md:text-3xl font-bold text-yellow-400 leading-relaxed tracking-wider font-pixel">
+                      <i className="fa-solid fa-seedling"></i> 2026年的同人女大冒險 <i className="fa-solid fa-seedling"></i><br/>
+                      <span className="text-sm md:text-lg text-[#FFFBF0] mt-2 block font-pixel">～狼若回頭，是為了拿起鋤頭～</span>
+                  </h1>
+              </div>
+
+              <PixelCard className="p-4 flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div className="flex items-center gap-6 w-full md:w-auto">
+                       <div className="relative group cursor-pointer animate-float">
+                          <div className={`w-24 h-24 border-4 flex items-center justify-center overflow-hidden shadow-pixel-sm rounded-xl transition-all duration-500 bg-rank-${currentTitle.rank} border-[#433422]`}>
+                              <i className={`fa-solid ${currentTitle.icon} text-5xl text-[#433422] drop-shadow-md`}></i>
+                          </div>
+                          <div className="absolute -bottom-3 -right-3 bg-black text-white text-xs px-2 py-1 font-retro border-2 border-white z-10">
+                              LV.{appState.rpg.level}
+                          </div>
+                          <div className={`absolute -top-4 left-1/2 transform -translate-x-1/2 text-white text-[10px] px-2 py-0.5 border-2 border-white font-bold whitespace-nowrap z-20 shadow-sm bg-rank-${currentTitle.rank === 'bronze' ? 'bronze' : currentTitle.rank === 'silver' ? 'silver' : currentTitle.rank === 'gold' ? 'gold' : 'plat'} text-[#433422]`}>
+                              {currentTitle.rank.toUpperCase()}
+                          </div>
+                      </div>
+                      
+                      <div className="flex-1">
+                          <div className="text-xs text-[#8C7B65] mb-1 tracking-widest font-bold">ADVENTURER STATUS</div>
+                          <h2 className="text-xl md:text-2xl text-[#433422] font-bold tracking-wider font-pixel">{currentTitle.name}</h2>
+                          <div className="text-sm text-green-700 font-bold mt-1 border-t-2 border-[#8C7B65] pt-1 font-pixel">
+                              <i className="fa-solid fa-quote-left text-xs text-[#8C7B65] mr-2"></i> {currentTitle.status}
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div className="w-full md:w-1/2 font-retro text-xs space-y-2">
+                      <div className="flex justify-between text-[#433422] font-bold"><span>HARVEST EXP</span><span>{appState.rpg.xp}/{appState.rpg.nextLevelXp}</span></div>
+                      <div className="w-full h-6 bg-[#8C7B65] border-4 border-[#433422] p-1 relative">
+                          <div style={{ width: `${Math.min((appState.rpg.xp / appState.rpg.nextLevelXp) * 100, 100)}%` }} className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500 relative"></div>
+                      </div>
+                      <div className="flex justify-between text-[#8C7B65] pt-1 border-t border-[#8C7B65]">
+                          <span>每日打卡: <span className="text-blue-600 font-bold">{appState.checkin.streak}</span> 天</span>
+                          <span>總登入: <span className="text-blue-600 font-bold">{appState.checkin.total}</span> 次</span>
+                      </div>
+                  </div>
+              </PixelCard>
+          </div>
+        );
+      };
+
+      const BGMPlayer = () => {
+        const [current, setCurrent] = useState(BGM_LIST[0]);
+        const playRandom = () => setCurrent(BGM_LIST[Math.floor(Math.random() * BGM_LIST.length)]);
+        
+        useEffect(() => playRandom(), []);
+
+        return (
+          <PixelCard className="bg-[#2D2D2D] text-white p-3 flex items-center justify-between gap-4 shadow-pixel-sm relative overflow-hidden mb-6">
+              <div className="flex items-center gap-4 z-10 w-full">
+                  <div className="bg-black border-2 border-stone-600 p-2 flex gap-1 items-end h-8">
+                      <div className="w-1 h-full bg-green-400 animate-[pulse_1s_infinite]"></div>
+                      <div className="w-1 h-3/4 bg-green-400 animate-[pulse_1.2s_infinite]"></div>
+                      <div className="w-1 h-1/2 bg-green-400 animate-[pulse_0.8s_infinite]"></div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                      <div className="text-[10px] text-green-400 font-retro mb-1 flex justify-between">
+                          <span>CREATOR RADIO</span>
+                      </div>
+                      <div 
+                        className="text-sm font-bold text-yellow-300 cursor-pointer hover:text-white truncate transition-colors font-pixel" 
+                        title="Search on YouTube" 
+                        onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(`${current.artist} ${current.title}`)}`, '_blank')}
+                      >
+                          ♫ {current.artist} - {current.title}
+                      </div>
+                  </div>
+                  <button onClick={playRandom} className="text-stone-400 hover:text-white bg-stone-800 p-2 rounded border-2 border-stone-600 active:translate-y-1">
+                    <i className="fa-solid fa-forward-step"></i>
+                  </button>
+              </div>
+              <div className="absolute right-0 top-0 text-stone-800 text-6xl opacity-20 pointer-events-none"><i className="fa-solid fa-music"></i></div>
+          </PixelCard>
+        );
+      };
+
+      const Logs = ({ history, onExportCSV, onRetro }) => {
+        const [filter, setFilter] = useState('all');
+        
+        const exportImg = () => {
+          const el = document.getElementById('history-log-container');
+          if (el && window.html2canvas) {
+            window.html2canvas(el, { backgroundColor: "#FFFBF0" }).then(canvas => {
+              const link = document.createElement('a');
+              link.download = 'adventure_logs.png';
+              link.href = canvas.toDataURL();
+              link.click();
+            });
+          } else {
+            alert("Image export module not loaded yet, please try again in a moment.");
+          }
+        };
+
+        const filtered = history.filter(h => filter === 'all' || h.type === filter);
+
+        return (
+          <PixelCard className="p-0 bg-[#FFFBF0] border-[#5C4033]">
+              <div className="bg-[#5C4033] text-[#FFFBF0] px-4 py-2 border-b-4 border-[#433422] flex justify-between items-center">
+                  <span className="font-bold font-pixel"><i className="fa-solid fa-warehouse"></i> 穀倉紀錄</span>
+                  <div className="flex gap-2 items-center">
+                      <button onClick={onExportCSV} className="text-xs bg-green-700 hover:bg-green-600 text-white px-2 py-1 border border-[#8C7B65]"><i className="fa-solid fa-file-csv"></i></button>
+                      <button onClick={exportImg} className="text-xs bg-blue-700 hover:bg-blue-600 text-white px-2 py-1 border border-[#8C7B65] mr-1"><i className="fa-solid fa-image"></i></button>
+                      <button onClick={onRetro} className="text-xs bg-[#8C7B65] hover:bg-[#6e5d4a] text-white px-2 py-1 border border-[#433422] mr-1"><i className="fa-solid fa-clock-rotate-left"></i> 補登</button>
+                      <select onChange={(e) => setFilter(e.target.value)} className="bg-[#8C7B65] text-white border-2 border-[#433422] p-1 focus:outline-none text-xs font-pixel">
+                          <option value="all">全部</option>
+                          <option value="draw">繪圖</option>
+                          <option value="write">寫作</option>
+                          <option value="side">支線</option>
+                      </select>
+                  </div>
+              </div>
+              <div id="history-log-container" className="p-2 min-h-[200px] max-h-[400px] overflow-y-auto bg-[#FFFBF0] text-[#433422] font-pixel">
+                  {filtered.length === 0 ? <div className="text-center py-4 text-[#8C7B65]">穀倉空空如也...</div> : 
+                    filtered.map(item => (
+                      <div key={item.id} className="border-b border-[#E8DCCA] pb-2 mb-2">
+                        <div className="flex justify-between text-xs text-[#8C7B65] mb-1">
+                          <span>{item.displayDate}</span>
+                          <span className={`font-bold ${item.type === 'draw' ? 'text-pink-600' : item.type === 'write' ? 'text-blue-600' : 'text-purple-600'}`}>
+                            [{item.type === 'draw' ? '繪圖' : item.type === 'write' ? '寫作' : '支線'}]
+                          </span>
+                        </div>
+                        <div className="pl-2 border-l-2 border-[#8C7B65] break-words">{item.note}</div>
+                      </div>
+                    ))
+                  }
+              </div>
+          </PixelCard>
+        );
+      };
+
+      const Sidebar = ({ appState, onGenerateReport, onAddHoliday, onResetData }) => {
+        const [hName, setHName] = useState("");
+        const [hDate, setHDate] = useState("");
+
+        const holidays = [...DEFAULT_HOLIDAYS, ...appState.customHolidays].map(h => {
+          const now = new Date();
+          let target = new Date();
+          if (h.type === 'custom' && h.date.length === 10) {
+            target = new Date(h.date);
+          } else {
+            const [m, d] = h.date.split('-').map(Number);
+            target = new Date(now.getFullYear(), m - 1, d);
+            if (target < now && target.toDateString() !== now.toDateString()) target.setFullYear(now.getFullYear() + 1);
+          }
+          const diff = Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return { ...h, daysLeft: diff };
+        }).sort((a, b) => a.daysLeft - b.daysLeft).slice(0, 5);
+
+        return (
+          <div className="space-y-8 font-pixel">
+              <PixelCard className="p-0 bg-teal-100 border-[#433422]">
+                  <div className="bg-teal-700 text-white p-2 border-b-4 border-[#433422] text-center font-bold">
+                      <i className="fa-solid fa-chart-line"></i> 冒險公會報表
+                  </div>
+                  <div className="p-4 space-y-2">
+                      <PixelBtn fullWidth onClick={() => onGenerateReport('month')} className="bg-teal-500 border-teal-700 text-white text-left px-4"><i className="fa-solid fa-calendar-days w-6"></i> 本月結算</PixelBtn>
+                      <PixelBtn fullWidth onClick={() => onGenerateReport('quarter')} className="bg-teal-600 border-teal-800 text-white text-left px-4"><i className="fa-solid fa-chart-pie w-6"></i> 季度總結</PixelBtn>
+                      <PixelBtn fullWidth onClick={() => onGenerateReport('year')} className="bg-yellow-600 border-yellow-800 text-white text-left px-4"><i className="fa-solid fa-crown w-6"></i> 年度回顧</PixelBtn>
+                  </div>
+              </PixelCard>
+
+              <PixelCard className="p-0">
+                   <div className="bg-yellow-500 text-black p-2 border-b-4 border-[#433422] text-center font-bold flex justify-between px-4">
+                      <span><i className="fa-solid fa-medal"></i> 榮譽勳章</span>
+                      <span className="font-retro text-xs pt-1">{appState.rpg.unlockedAchievements.length}/{ACHIEVEMENTS.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-2 p-2 bg-[#E8DCCA] max-h-[300px] overflow-y-auto">
+                    {ACHIEVEMENTS.map(ach => {
+                      const unlocked = appState.rpg.unlockedAchievements.includes(ach.id);
+                      return (
+                        <div key={ach.id} className={`flex items-center gap-3 p-2 bg-white border-b-2 border-[#C0A080] ${unlocked ? '' : 'grayscale opacity-60'}`}>
+                          <div className={`min-w-[40px] h-[40px] flex items-center justify-center border-2 border-black ${unlocked ? 'bg-yellow-300' : 'bg-gray-200'}`}>
+                            <i className={`fa-solid ${ach.icon} text-lg`}></i>
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold">{ach.name}</div>
+                            <div className="text-[10px] text-gray-600">{ach.desc}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+              </PixelCard>
+
+              <PixelCard className="p-0">
+                   <div className="bg-red-600 text-white p-2 border-b-4 border-[#433422] text-center font-bold"><i className="fa-solid fa-calendar-days"></i> 耕作時令</div>
+                   <div className="bg-red-100 p-3 border-b-2 border-red-200">
+                      <div className="flex gap-2 mb-2">
+                          <input value={hName} onChange={e => setHName(e.target.value)} className="w-full text-xs p-1 border-2 border-[#433422]" placeholder="名稱" />
+                          <input type="date" value={hDate} onChange={e => setHDate(e.target.value)} className="w-24 text-xs p-1 border-2 border-[#433422]" />
+                      </div>
+                      <button onClick={() => { if(hName && hDate) { onAddHoliday(hName, hDate); setHName(""); setHDate(""); }}} className="w-full bg-red-500 text-white text-xs font-bold py-1 border-2 border-[#433422] hover:bg-red-400">新增</button>
+                   </div>
+                   <div className="p-4 space-y-3 bg-white max-h-[200px] overflow-y-auto">
+                     {holidays.map((h, i) => (
+                       <div key={i} className="flex items-center gap-2 border-b border-[#E8DCCA] pb-2">
+                         <div className="text-[10px] font-bold text-gray-400 w-8">{h.date.length > 5 ? h.date.substring(5) : h.date}</div>
+                         <div className="flex-1 text-sm font-bold text-gray-800 flex justify-between">
+                           <span>{h.name}</span>
+                           <span className={`text-[10px] text-white px-1.5 rounded ${h.daysLeft <= 0 ? 'bg-red-600' : 'bg-blue-500'}`}>{h.daysLeft <= 0 ? '今天!' : `${h.daysLeft}天`}</span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+              </PixelCard>
+
+              <div className="text-center">
+                  <button onClick={onResetData} className="text-[10px] text-gray-500 hover:text-red-500 font-retro">[RESET DATA]</button>
+                  <div className="text-[10px] text-green-700 font-bold mt-1">Auto-Save Enabled <i className="fa-solid fa-check"></i></div>
+              </div>
+          </div>
+        );
+      };
+
+      // --- MAIN APP LOGIC ---
+
+      const INITIAL_STATE = {
+        rpg: { level: 1, xp: 0, nextLevelXp: 100, unlockedAchievements: [], lastReportRank: null },
+        checkin: { lastDate: null, streak: 0, total: 0 },
+        history: [],
+        customHolidays: [],
+        draw: { done: false, count: 0, lastResetWeek: null },
+        write: { done: false, count: 0, lastResetMonth: null },
+        side: { done: false, text: "", concept: "", date: null, count: 0 }
+      };
+
+      const App = () => {
+        const [state, setState] = useState(INITIAL_STATE);
+        const [loaded, setLoaded] = useState(false);
+        const [modalOpen, setModalOpen] = useState(false);
+        const [activeModalType, setActiveModalType] = useState(null);
+        const [isRetro, setIsRetro] = useState(false);
+        const [toast, setToast] = useState({ show: false, msg: "" });
+        const [reportData, setReportData] = useState(null);
+
+        // Form State
+        const [formData, setFormData] = useState({ cp: "", title: "", words: 0, rating: "G", note: "", date: "" });
+
+        // Load / Save with Safe Merging
+        useEffect(() => {
+          const saved = localStorage.getItem('farmingRpg_v17_react');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              const mergedState = {
+                ...INITIAL_STATE,
+                ...parsed,
+                rpg: { ...INITIAL_STATE.rpg, ...(parsed.rpg || {}) },
+                checkin: { ...INITIAL_STATE.checkin, ...(parsed.checkin || {}) },
+                draw: { ...INITIAL_STATE.draw, ...(parsed.draw || {}) },
+                write: { ...INITIAL_STATE.write, ...(parsed.write || {}) },
+                side: { ...INITIAL_STATE.side, ...(parsed.side || {}) },
+                history: Array.isArray(parsed.history) ? parsed.history : INITIAL_STATE.history,
+                customHolidays: Array.isArray(parsed.customHolidays) ? parsed.customHolidays : INITIAL_STATE.customHolidays,
+              };
+              setState(mergedState);
+            } catch (e) {
+              console.error("Failed to load save data", e);
+            }
+          }
+          setLoaded(true);
+        }, []);
+
+        useEffect(() => {
+          if (loaded) localStorage.setItem('farmingRpg_v17_react', JSON.stringify(state));
+        }, [state, loaded]);
+
+        // Daily Checkin & Resets
+        useEffect(() => {
+          if (!loaded) return;
+          const now = new Date();
+          const todayStr = now.toDateString();
+          
+          // Checkin
+          if (state.checkin.lastDate !== todayStr) {
+            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            const isConsecutive = state.checkin.lastDate === yesterday.toDateString();
+            setState(prev => ({
+              ...prev,
+              checkin: {
+                lastDate: todayStr,
+                streak: isConsecutive ? prev.checkin.streak + 1 : 1,
+                total: prev.checkin.total + 1
+              }
+            }));
+            showToast(isConsecutive ? `每日打卡成功！(連續 ${state.checkin.streak + 1} 天)` : "每日打卡成功！");
+          }
+
+          // Weekly/Monthly Resets
+          const d = new Date(now);
+          const day = d.getDay();
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+          const monday = new Date(d.setDate(diff));
+          const currentWeek = `${monday.getFullYear()}-W${Math.ceil((((monday.getTime() - new Date(monday.getFullYear(),0,1).getTime())/86400000)+1)/7)}`;
+          const currentMonth = `${now.getFullYear()}-M${now.getMonth() + 1}`;
+
+          if (state.draw.lastResetWeek !== currentWeek) {
+            setState(prev => ({ ...prev, draw: { ...prev.draw, done: false, lastResetWeek: currentWeek } }));
+          }
+          if (state.write.lastResetMonth !== currentMonth) {
+            setState(prev => ({ ...prev, write: { ...prev.write, done: false, lastResetMonth: currentMonth } }));
+          }
+        }, [loaded]);
+
+        // Confetti Helper
+        const triggerConfetti = () => {
+          if (window.confetti) {
+            window.confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+          }
+        };
+
+        const showToast = (msg) => {
+          setToast({ show: true, msg });
+          setTimeout(() => setToast({ show: false, msg: "" }), 3000);
+        };
+
+        const gainXp = (amount) => {
+          setState(prev => {
+            let { xp, level, nextLevelXp } = prev.rpg;
+            xp += amount;
+            while (xp >= nextLevelXp) {
+              xp -= nextLevelXp;
+              level++;
+              nextLevelXp = 100 + (level * 15); 
+              showToast(`LEVEL UP! LV.${level}`);
+            }
+            return { ...prev, rpg: { ...prev.rpg, xp, level, nextLevelXp } };
+          });
+        };
+
+        const calculateStats = (history) => {
+          const now = new Date();
+          const todayStr = now.toDateString();
+          
+          let totalWords = 0;
+          let r18Count = 0;
+          let gCount = 0;
+          let maxDaily = 0;
+          let todayCount = 0;
+          
+          const dailyCounts = {};
+          const cpHistory = [];
+
+          history.forEach(h => {
+            if (h.wordCount) totalWords += h.wordCount;
+            if (h.rating === 'R-18') r18Count++;
+            if (h.rating === 'G') gCount++;
+            if (h.cp) cpHistory.push(h.cp);
+
+            const d = new Date(h.date).toDateString();
+            dailyCounts[d] = (dailyCounts[d] || 0) + 1;
+            if (d === todayStr) todayCount++;
+          });
+
+          maxDaily = Math.max(...Object.values(dailyCounts), 0);
+          const recentCPs = cpHistory.slice(0, 5);
+          const uniqueRecentCPs = new Set(recentCPs).size;
+          
+          return {
+            totalWords, r18Count, gCount, maxDaily, todayCount, recentCPs, uniqueRecentCPs
+          };
+        };
+
+        const checkAchievements = (newState, type, currentEntry) => {
+          const unlocked = [...newState.rpg.unlockedAchievements];
+          const unlock = (id) => {
+            if (!unlocked.includes(id)) {
+              unlocked.push(id);
+              const name = ACHIEVEMENTS.find(a => a.id === id)?.name;
+              showToast(`成就解鎖: ${name}`);
+            }
+          };
+          
+          if (type === 'draw') unlock('first_draw');
+          if (type === 'write') unlock('first_write');
+          if (type === 'side') unlock('side_starter');
+          
+          if (newState.draw.count >= 10) unlock('draw_10');
+          if (newState.draw.count >= 30) unlock('draw_30');
+          if (newState.draw.count >= 50) unlock('draw_50');
+          if (newState.write.count >= 10) unlock('write_10');
+          if (newState.write.count >= 30) unlock('write_30');
+          if (newState.write.count >= 50) unlock('write_50');
+          if (newState.write.count >= 50) unlock('bard'); 
+          if (newState.side.count >= 20) unlock('side_20');
+          if (newState.side.count >= 30) unlock('archmage');
+          if (newState.history.length >= 88) unlock('merchant');
+          if (newState.history.length >= 100) unlock('total_100');
+
+          if (newState.rpg.level >= 5) unlock('level_5');
+          if (newState.rpg.level >= 20) unlock('level_20');
+          if (newState.rpg.level >= 30) unlock('level_30');
+          if (newState.rpg.level >= 40) unlock('level_40');
+          if (newState.rpg.level >= 50) unlock('level_50');
+
+          const stats = calculateStats(newState.history);
+
+          if (stats.r18Count > 0) unlock('r18_driver');
+          if (stats.r18Count >= 10) unlock('abyss_walker');
+          if (stats.gCount >= 5) unlock('pure_love');
+          if (stats.gCount >= 20) unlock('saint');
+          
+          const last10 = newState.history.slice(0, 10);
+          if (last10.length === 10 && last10.every(h => h.rating !== 'R-18')) unlock('paladin');
+
+          if (currentEntry.wordCount && currentEntry.wordCount >= 10000) unlock('word_count_king');
+          if (currentEntry.type === 'write' && currentEntry.wordCount && currentEntry.wordCount < 500) unlock('short_poet');
+          if (stats.totalWords >= 50000) unlock('word_accumulator');
+          
+          const now = new Date();
+          const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+          const monthWords = newState.history
+              .filter(h => h.date.startsWith(currentMonthPrefix))
+              .reduce((sum, h) => sum + (h.wordCount || 0), 0);
+          if (monthWords > 30000) unlock('berserker');
+
+          if (currentEntry.title) {
+              if (currentEntry.title.length > 15) unlock('light_novelist');
+              if (currentEntry.title.includes('無題') || currentEntry.title.toLowerCase().includes('untitled')) unlock('naming_sense_zero');
+          }
+
+          if (stats.recentCPs.length === 5) {
+              if (stats.uniqueRecentCPs === 1) unlock('cp_devoted');
+              if (stats.uniqueRecentCPs === 5) unlock('harem_master');
+          }
+
+          if (stats.maxDaily >= 3) unlock('tentacle_monster');
+
+          const totalCount = newState.draw.count + newState.write.count;
+          if (totalCount >= 3) unlock('streak_3');
+          if (totalCount >= 10) unlock('streak_10');
+          if (totalCount >= 30) unlock('streak_30');
+          if (newState.checkin.streak >= 30) unlock('daily_checkin_30');
+
+          const entryDate = new Date(currentEntry.date);
+          const hour = entryDate.getHours();
+          const day = entryDate.getDay(); 
+          const month = entryDate.getMonth() + 1;
+          const dateNum = entryDate.getDate();
+
+          if (hour >= 5 && hour <= 9) unlock('early_bird');
+          if (hour >= 12 && hour <= 13) unlock('lunch_break');
+          if (hour >= 9 && hour <= 17 && day >= 1 && day <= 5) unlock('workday_hero');
+          if (hour >= 22 || hour <= 2) unlock('night_owl');
+          if (hour >= 2 && hour <= 5) unlock('midnight_emo');
+          if (hour === 3) unlock('assassin');
+
+          if (day === 1) unlock('blue_monday');
+          if (day === 5) unlock('happy_friday');
+          if (day === 0 || day === 6) unlock('weekend_warrior');
+          if (day === 0 && hour >= 23) unlock('procrastinator');
+          if (day === 1 && currentEntry.type === 'draw') unlock('speed_runner');
+
+          if ((month === 2 || month === 3) && dateNum === 14) unlock('valentine_lover');
+          
+          const isHoliday = [...DEFAULT_HOLIDAYS, ...newState.customHolidays].some(h => {
+              if (h.date.length === 5) {
+                  const [m, d] = h.date.split('-').map(Number);
+                  return m === month && d === dateNum;
+              }
+              return h.date === entryDate.toISOString().split('T')[0];
+          });
+          if (isHoliday) unlock('holiday_sniper');
+
+          const todayEntries = newState.history.filter(h => new Date(h.date).toDateString() === entryDate.toDateString());
+          const hasDraw = todayEntries.some(h => h.type === 'draw');
+          const hasWrite = todayEntries.some(h => h.type === 'write');
+          if (hasDraw && hasWrite) unlock('double_kill');
+
+          if (newState.draw.count > 5 && newState.write.count > 5) {
+              const ratio = Math.abs(newState.draw.count - newState.write.count) / Math.max(newState.draw.count, newState.write.count);
+              if (ratio < 0.2) unlock('balanced_diet');
+          }
+
+          const diffTime = Math.abs(new Date().getTime() - entryDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          if (diffDays > 30) unlock('retro_gamer');
+          if (diffDays > 360) unlock('necromancer');
+
+          if (unlocked.length >= 50) unlock('achievement_hunter');
+          if (newState.rpg.level >= 50 && unlocked.length >= 40) unlock('legend');
+
+          return unlocked;
+        };
+
+        const handleSubmit = () => {
+          if (!activeModalType) return;
+          
+          if (activeModalType === 'draw' && (!formData.cp || !formData.rating)) { alert("請填寫 CP 與分級"); return; }
+          if (activeModalType === 'write' && (!formData.cp || !formData.title || formData.words <= 0)) { alert("請填寫完整資訊"); return; }
+          
+          const date = isRetro && formData.date ? new Date(formData.date).toISOString() : new Date().toISOString();
+          const displayDate = new Date(date).toLocaleDateString('zh-TW');
+          
+          let note = formData.note;
+          if (activeModalType === 'draw') note = `[${formData.rating}] ${formData.cp} | ${formData.note}`;
+          if (activeModalType === 'write') note = `[${formData.rating}] ${formData.cp} <${formData.title}> (${formData.words}字) | ${formData.note}`;
+
+          const entry = {
+            id: Date.now(),
+            date,
+            displayDate,
+            type: activeModalType,
+            note,
+            cp: formData.cp,
+            title: formData.title,
+            wordCount: Number(formData.words),
+            rating: formData.rating
+          };
+
+          setState(prev => {
+            const next = { ...prev };
+            next.history = [entry, ...prev.history];
+            
+            if (!isRetro) {
+              if (activeModalType === 'draw') { next.draw.done = true; next.draw.count++; gainXp(150); }
+              if (activeModalType === 'write') { next.write.done = true; next.write.count++; gainXp(500); }
+              if (activeModalType === 'side') { next.side.done = true; next.side.count++; gainXp(50); }
+            }
+            
+            next.rpg.unlockedAchievements = checkAchievements(next, activeModalType, entry);
+            return next;
+          });
+
+          setModalOpen(false);
+          triggerConfetti();
+          setFormData({ cp: "", title: "", words: 0, rating: "G", note: "", date: "" });
+        };
+
+        const handleResetTask = (type) => {
+          if (confirm("確定要重置任務狀態嗎？這將允許你重複提交任務。")) {
+            setState(prev => {
+              const next = { ...prev, [type]: { ...prev[type], done: false } };
+              const unlocked = [...next.rpg.unlockedAchievements];
+              if (!unlocked.includes('reset_master')) {
+                unlocked.push('reset_master');
+                showToast("成就解鎖: 洗點大師");
+                next.rpg.unlockedAchievements = unlocked;
+              }
+              return next;
+            });
+          }
+        };
+
+        const refreshSideQuest = () => {
+          const text = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+          const concept = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+          setState(prev => ({ ...prev, side: { ...prev.side, done: false, text, concept, date: new Date().toDateString() } }));
+        };
+        
+        useEffect(() => {
+          if (!state.side.date || state.side.date !== new Date().toDateString()) refreshSideQuest();
+        }, [loaded]);
+
+        const generateReport = (type) => {
+          const now = new Date();
+          let logs = state.history;
+          let title = "";
+          
+          if (type === 'month') {
+              const prefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+              logs = logs.filter(h => h.date.startsWith(prefix));
+              title = `${prefix} 月報`;
+          } else if (type === 'year') {
+              logs = logs.filter(h => h.date.startsWith(String(now.getFullYear())));
+              title = `${now.getFullYear()} 年度總結`;
+          } else {
+              title = "季度總結";
+          }
+
+          const totalCount = logs.length;
+          const wordCount = logs.reduce((acc, curr) => acc + (curr.wordCount || 0), 0);
+          const r18Count = logs.filter(l => l.rating === 'R-18' || l.note.includes('R-18')).length;
+          const r18Ratio = totalCount > 0 ? (r18Count / totalCount) * 100 : 0;
+          
+          const cpCounts = {};
+          logs.forEach(l => { if(l.cp) cpCounts[l.cp] = (cpCounts[l.cp] || 0) + 1; });
+          const topCp = Object.keys(cpCounts).length > 0 
+            ? Object.entries(cpCounts).sort((a,b) => b[1] - a[1])[0][0] 
+            : "無";
+
+          const score = (totalCount * 10) + (wordCount / 500) + (r18Count * 5);
+          let rank = "D";
+          if (score > 50) rank = "C";
+          if (score > 150) rank = "B";
+          if (score > 300) rank = "A";
+          if (score > 500) rank = "S";
+          if (score > 800) rank = "SS";
+
+          let flavorText = "公會的一般冒險者。";
+          let rpgClass = "村民";
+
+          const str = Math.min(100, wordCount / 500); 
+          const agi = Math.min(100, totalCount * 5); 
+          const int = Math.min(100, logs.filter(l => l.type === 'side').length * 10 + 20); 
+          const chr = Math.min(100, state.rpg.unlockedAchievements.length * 2); 
+
+          if (r18Ratio > 60) {
+            rpgClass = "深淵術士 (Abyss Warlock)";
+            flavorText = "你在慾望的深淵中凝視，深淵也凝視著你。產糧尺度驚人。";
+          } else if (r18Ratio < 10 && totalCount > 5) {
+            rpgClass = "光之聖騎士 (Paladin)";
+            flavorText = "純愛戰神，守護著最後的淨土，你的糧食充滿了神聖的光輝。";
+          } else if (wordCount > 20000) {
+            rpgClass = "吟遊詩人 (Bard)";
+            flavorText = "你的文字量足以編寫史詩，鍵盤是你最強的武器。";
+          } else if (totalCount > 20) {
+            rpgClass = "暗影刺客 (Assassin)";
+            flavorText = "天下武功唯快不破，你的產糧速度快到讓人看不見車尾燈。";
+          } else if (logs.some(l => l.type === 'side')) {
+            rpgClass = "煉金術師 (Alchemist)";
+            flavorText = "擅長將各種奇怪的梗提煉成美味的糧食。";
+          }
+
+          setReportData({ 
+            title, 
+            count: totalCount, 
+            wordCount, 
+            rank, 
+            topCp, 
+            r18Ratio, 
+            flavorText, 
+            rpgClass, 
+            stats: { str, agi, int, chr }
+          });
+        };
+
+        const currentTitle = TITLES.slice().reverse().find(t => state.rpg.level >= t.lv) || TITLES[0];
+
+        return (
+          <div className="min-h-screen flex flex-col items-center py-8 px-4 pb-32 font-pixel text-farm-text">
+            <Header appState={state} currentTitle={currentTitle} />
+            
+            <main className="w-full max-w-5xl space-y-6">
+              <BGMPlayer />
+              
+              <PixelCard className="bg-[#2D2D2D] text-green-400 p-6 relative">
+                  <div className="absolute -top-4 left-4 bg-red-600 text-white px-3 py-1 text-xs font-bold border-4 border-white transform rotate-2 shadow-pixel-sm font-retro z-10">SYSTEM ALERT</div>
+                  <h1 className="text-lg md:text-xl font-mono text-center leading-relaxed mt-2">{SPICY_QUOTES[Math.floor(Math.random() * SPICY_QUOTES.length)]}</h1>
+              </PixelCard>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 space-y-8">
+                      <ArtTask appState={state} onOpenModal={(t) => { setActiveModalType(t); setModalOpen(true); setIsRetro(false); }} onReset={handleResetTask} onRefreshSideQuest={refreshSideQuest} spicyQuote="自耕農是沒有休息日的。" />
+                      <WritingTask appState={state} onOpenModal={(t) => { setActiveModalType(t); setModalOpen(true); setIsRetro(false); }} onReset={handleResetTask} onRefreshSideQuest={refreshSideQuest} spicyQuote="截稿日是第一生產力。" />
+                      <SideQuestTask appState={state} onOpenModal={(t) => { setActiveModalType(t); setModalOpen(true); setIsRetro(false); }} onReset={handleResetTask} onRefreshSideQuest={refreshSideQuest} />
+                      <Logs history={state.history} onExportCSV={() => {}} onRetro={() => { setIsRetro(true); setModalOpen(true); setActiveModalType('draw'); }} />
+                  </div>
+                  <div className="lg:col-span-1 space-y-8">
+                      <Sidebar 
+                        appState={state} 
+                        onGenerateReport={generateReport} 
+                        onAddHoliday={(n, d) => setState(prev => ({ ...prev, customHolidays: [...prev.customHolidays, { name: n, date: d, type: 'custom' }] }))}
+                        onResetData={() => { if(confirm("Clear All Data?")) { localStorage.removeItem('farmingRpg_v17_react'); window.location.reload(); } }}
+                      />
+                  </div>
+              </div>
+            </main>
+
+            <Toast message={toast.msg} show={toast.show} />
+
+            {/* Submission Modal */}
+            {modalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
+                  <div className="relative w-full max-w-md bg-[#FFFBF0] border-4 border-farm-border shadow-pixel p-6 animate-[float_0.3s_ease-out] z-50">
+                      <div className="bg-green-600 text-white px-3 py-1 absolute -top-4 left-4 border-2 border-farm-border font-retro text-xs shadow-pixel-sm transform -rotate-2">
+                          {isRetro ? "RETROACTIVE" : "SUBMISSION"}
+                      </div>
+                      <div className="text-center mb-4 mt-2">
+                          <h3 className="text-2xl font-bold text-farm-text mb-1">{isRetro ? "補登模式" : "提交產出"}</h3>
+                          <p className="text-xs text-[#8C7B65]">填寫你的作品資訊</p>
+                      </div>
+
+                      {isRetro && (
+                        <div className="mb-4 bg-yellow-50 p-3 border-2 border-farm-border">
+                            <div className="flex gap-2 mb-2"><PixelInput type="date" onChange={e => setFormData({...formData, date: e.target.value})} /></div>
+                            <div className="flex justify-between gap-2 text-xs font-bold">
+                              {['draw', 'write', 'side'].map(t => (
+                                <label key={t} className="flex items-center cursor-pointer">
+                                  <input type="radio" name="rtype" checked={activeModalType === t} onChange={() => setActiveModalType(t)} className="mr-1" />
+                                  {t === 'draw' ? '繪圖' : t === 'write' ? '文章' : '支線'}
+                                </label>
+                              ))}
+                            </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                          {(activeModalType === 'draw' || activeModalType === 'write') && (
+                            <div><label className="text-xs font-bold block mb-1">CP (配對)</label><PixelInput value={formData.cp} onChange={e => setFormData({...formData, cp: e.target.value})} placeholder="例如：五夏" /></div>
+                          )}
+                          {activeModalType === 'write' && (
+                            <>
+                              <div><label className="text-xs font-bold block mb-1">標題</label><PixelInput value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
+                              <div><label className="text-xs font-bold block mb-1">字數</label><PixelInput type="number" value={formData.words} onChange={e => setFormData({...formData, words: parseInt(e.target.value)})} /></div>
+                            </>
+                          )}
+                          {(activeModalType === 'draw' || activeModalType === 'write') && (
+                            <div>
+                              <label className="text-xs font-bold block mb-1">分級</label>
+                              <select className="w-full bg-[#FFFBF0] border-2 border-farm-border p-2 font-pixel text-sm" value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})}>
+                                <option value="G">G (全年齡)</option>
+                                <option value="R-15">R-15</option>
+                                <option value="R-18">R-18</option>
+                              </select>
+                            </div>
+                          )}
+                          <div><label className="text-xs font-bold block mb-1">備註</label><PixelTextArea rows={3} value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} /></div>
+                      </div>
+
+                      <div className="flex gap-4 mt-6">
+                          <PixelBtn className="flex-1 bg-stone-300 border-stone-400" onClick={() => setModalOpen(false)}>取消</PixelBtn>
+                          <PixelBtn className="flex-1 bg-green-500 text-white border-green-700" onClick={handleSubmit}>確認入庫</PixelBtn>
+                      </div>
+                  </div>
+              </div>
+            )}
+
+            {/* Report Modal */}
+            {reportData && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setReportData(null)}></div>
+                  <div className="relative w-full max-w-lg bg-[#FFFBF0] border-4 border-farm-border p-0 flex flex-col max-h-[90vh] z-50 overflow-hidden">
+                      <div className="bg-[#433422] text-white p-3 border-b-4 border-farm-border font-bold text-center flex justify-between items-center shrink-0">
+                          <span><i className="fa-solid fa-scroll"></i> 冒險者公會分析</span>
+                          <button onClick={() => setReportData(null)}><i className="fa-solid fa-xmark"></i></button>
+                      </div>
+                      <div className="p-6 overflow-y-auto">
+                        <div className="text-center mb-6">
+                            <div className="inline-block bg-black text-white px-3 py-1 font-retro text-xs transform -rotate-2 border-2 border-white shadow-md mb-2">{reportData.rpgClass}</div>
+                            <div className="text-3xl font-bold text-farm-text mb-1">{reportData.title}</div>
+                            <div className="text-xs text-[#8C7B65] font-pixel">{reportData.flavorText}</div>
+                        </div>
+
+                        <div className="mb-6 space-y-2 font-retro text-xs text-farm-text">
+                            <div className="flex items-center gap-2">
+                              <span className="w-8 font-bold">STR</span>
+                              <div className="flex-1 h-3 bg-stone-300 border border-black"><div style={{width: `${reportData.stats.str}%`}} className="h-full bg-red-500"></div></div>
+                              <span className="w-6 text-right">{Math.round(reportData.stats.str)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-8 font-bold">AGI</span>
+                              <div className="flex-1 h-3 bg-stone-300 border border-black"><div style={{width: `${reportData.stats.agi}%`}} className="h-full bg-green-500"></div></div>
+                              <span className="w-6 text-right">{Math.round(reportData.stats.agi)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-8 font-bold">INT</span>
+                              <div className="flex-1 h-3 bg-stone-300 border border-black"><div style={{width: `${reportData.stats.int}%`}} className="h-full bg-blue-500"></div></div>
+                              <span className="w-6 text-right">{Math.round(reportData.stats.int)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-8 font-bold">CHR</span>
+                              <div className="flex-1 h-3 bg-stone-300 border border-black"><div style={{width: `${reportData.stats.chr}%`}} className="h-full bg-yellow-500"></div></div>
+                              <span className="w-6 text-right">{Math.round(reportData.stats.chr)}</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6 text-farm-text">
+                            <div className="border-2 border-farm-border bg-white p-2 text-center">
+                              <div className="text-xs text-[#8C7B65]">產出總數</div>
+                              <div className="text-xl font-bold">{reportData.count}</div>
+                            </div>
+                            <div className="border-2 border-farm-border bg-white p-2 text-center">
+                              <div className="text-xs text-[#8C7B65]">總字數</div>
+                              <div className="text-xl font-bold text-blue-600">{reportData.wordCount}</div>
+                            </div>
+                            <div className="border-2 border-farm-border bg-white p-2 text-center">
+                              <div className="text-xs text-[#8C7B65]">最愛CP</div>
+                              <div className="text-lg font-bold truncate">{reportData.topCp}</div>
+                            </div>
+                            <div className="border-2 border-farm-border bg-white p-2 text-center">
+                              <div className="text-xs text-[#8C7B65]">R18 濃度</div>
+                              <div className="text-xl font-bold text-pink-600">{Math.round(reportData.r18Ratio)}%</div>
+                            </div>
+                        </div>
+                        
+                        <div className="border-4 border-farm-border bg-[#FDF6E3] p-4 text-center">
+                            <div className="text-xs text-[#8C7B65] mb-1">公會評級</div>
+                            <div className="text-5xl font-retro font-bold text-farm-text">{reportData.rank}</div>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
   </body>
 </html>

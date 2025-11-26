@@ -25,6 +25,12 @@ export default function App() {
   const [toast, setToast] = useState({ show: false, msg: "" });
   const [reportData, setReportData] = useState<ReportData | null>(null);
 
+  // System Quote State
+  const [systemQuote, setSystemQuote] = useState(() => {
+    const all = [...SPICY_QUOTES.general, ...SPICY_QUOTES.writing, ...SPICY_QUOTES.drawing];
+    return all[Math.floor(Math.random() * all.length)];
+  });
+
   // Form State
   const [formData, setFormData] = useState({ cp: "", title: "", words: 0, rating: "G", note: "", date: "" });
 
@@ -470,7 +476,7 @@ export default function App() {
         
         <PixelCard className="bg-[#2D2D2D] text-green-400 p-6 relative">
              <div className="absolute -top-4 left-4 bg-red-600 text-white px-3 py-1 text-xs font-bold border-4 border-white transform rotate-2 shadow-pixel-sm font-retro z-10">SYSTEM ALERT</div>
-             <h1 className="text-lg md:text-xl font-mono text-center leading-relaxed mt-2">{SPICY_QUOTES[Math.floor(Math.random() * SPICY_QUOTES.length)]}</h1>
+             <h1 className="text-lg md:text-xl font-mono text-center leading-relaxed mt-2">{systemQuote}</h1>
         </PixelCard>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
