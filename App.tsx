@@ -28,10 +28,29 @@ export default function App() {
   // Form State
   const [formData, setFormData] = useState({ cp: "", title: "", words: 0, rating: "G", note: "", date: "" });
 
-  // Load / Save
+  // Load / Save with Safe Merging
   useEffect(() => {
     const saved = localStorage.getItem('farmingRpg_v17_react');
-    if (saved) setState(JSON.parse(saved));
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Deep merge to ensure all new state properties exist even if loading old data
+        const mergedState: AppState = {
+          ...INITIAL_STATE,
+          ...parsed,
+          rpg: { ...INITIAL_STATE.rpg, ...(parsed.rpg || {}) },
+          checkin: { ...INITIAL_STATE.checkin, ...(parsed.checkin || {}) },
+          draw: { ...INITIAL_STATE.draw, ...(parsed.draw || {}) },
+          write: { ...INITIAL_STATE.write, ...(parsed.write || {}) },
+          side: { ...INITIAL_STATE.side, ...(parsed.side || {}) },
+          history: Array.isArray(parsed.history) ? parsed.history : INITIAL_STATE.history,
+          customHolidays: Array.isArray(parsed.customHolidays) ? parsed.customHolidays : INITIAL_STATE.customHolidays,
+        };
+        setState(mergedState);
+      } catch (e) {
+        console.error("Failed to load save data", e);
+      }
+    }
     setLoaded(true);
   }, []);
 

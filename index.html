@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
   <head>
@@ -75,6 +76,13 @@
 </script>
 </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #5C4033; font-family: monospace;">
+        <h2 style="font-size: 24px; margin-bottom: 20px;">Loading Adventure...</h2>
+        <p>正在載入同人女大冒險...</p>
+        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(若長時間無反應，請確保您是在支援 ES Modules 的環境下執行)</p>
+      </div>
+    </div>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
