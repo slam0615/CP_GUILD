@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>2026年的同人女大冒險</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (CDN for simplicity in this setup) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,8 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Html2Canvas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
       tailwind.config = {
@@ -67,10 +64,12 @@
   <script type="importmap">
 {
   "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
     "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
   }
 }
 </script>
@@ -80,7 +79,7 @@
       <div style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #5C4033; font-family: monospace;">
         <h2 style="font-size: 24px; margin-bottom: 20px;">Loading Adventure...</h2>
         <p>正在載入同人女大冒險...</p>
-        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(若長時間無反應，請確保您是在支援 ES Modules 的環境下執行)</p>
+        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(若此畫面持續過久，代表程式發生錯誤)</p>
       </div>
     </div>
     <script type="module" src="./index.tsx"></script>
