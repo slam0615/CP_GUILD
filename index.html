@@ -5,18 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>2026年的同人女大冒險</title>
     
-    <!-- Libraries -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-    <!-- React & Babel -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
     <script>
       tailwind.config = {
         theme: {
@@ -51,6 +41,21 @@
         }
       }
     </script>
+
+    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <!-- Utilities -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <!-- React & Babel (The engine) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel Standalone for compiling TSX in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
       body {
         background-color: #FDF6E3;
@@ -68,7 +73,6 @@
 {
   "imports": {
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
     "vite": "https://aistudiocdn.com/vite@^7.2.4",
@@ -82,11 +86,12 @@
       <div style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #5C4033; font-family: monospace;">
         <h2 style="font-size: 24px; margin-bottom: 20px;">Loading Adventure...</h2>
         <p>正在載入同人女大冒險...</p>
-        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(首次載入可能需要幾秒鐘)</p>
+        <p style="font-size: 12px; opacity: 0.7; margin-top: 20px;">(若長時間無反應，請確保您是在支援 ES Modules 的環境下執行)</p>
       </div>
     </div>
     
-    <!-- Load the main logic via Babel -->
+    <!-- Main Application Logic - Combined into one file for stability -->
+    <!-- data-presets is CRITICAL for parsing TSX -->
     <script type="text/babel" data-presets="typescript,react" src="./app.tsx"></script>
   </body>
 </html>
