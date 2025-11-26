@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2026年的同人女大冒險</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Html2Canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'farm-bg': '#FDF6E3',
+              'farm-card': '#FFFBF0',
+              'farm-border': '#5C4033',
+              'farm-text': '#433422',
+              'rank-bronze': '#CD7F32',
+              'rank-silver': '#C0C0C0',
+              'rank-gold': '#FFD700',
+              'rank-plat': '#00CED1', 
+              'rank-diamond': '#B9F2FF', 
+            },
+            fontFamily: {
+              pixel: ['"DotGothic16"', 'sans-serif'],
+              retro: ['"Press Start 2P"', 'cursive'],
+            },
+            boxShadow: {
+              'pixel': '4px 4px 0px 0px rgba(92, 64, 51, 1)',
+              'pixel-sm': '2px 2px 0px 0px rgba(92, 64, 51, 0.8)',
+            },
+            animation: {
+              'float': 'float 3s ease-in-out infinite',
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } },
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #FDF6E3;
+        background-image: 
+          linear-gradient(rgba(92, 64, 51, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(92, 64, 51, 0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        color: #433422;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 12px; }
+      ::-webkit-scrollbar-track { background: #FDF6E3; border-left: 2px solid #5C4033; }
+      ::-webkit-scrollbar-thumb { background-color: #8B4513; border: 2px solid #5C4033; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
