@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Media Grabber</title>
+<style>
+  :root {
+    --bg: #f6f6f8; --card: #fff; --text: #1c1c21; --muted: #6b6b76; --line: #e4e4ea;
+    --accent: #5b5bf0; --accent-text: #fff; --err: #c93838; --warn-bg: #fff6e0; --warn: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131317; --card: #1d1d23; --text: #ececf1; --muted: #9a9aa6; --line: #2e2e37;
+            --accent: #8585ff; --accent-text: #0e0e12; --err: #ff7a7a; --warn-bg: #3a2f12; --warn: #ffd27a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.55 system-ui, -apple-system, "PingFang TC", "Noto Sans TC", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 40px 16px 80px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  form { display: flex; gap: 8px; }
+  input[type=url] { flex: 1; min-width: 0; padding: 12px 14px; font-size: 15px; border-radius: 10px;
+                    border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  button, .btn { padding: 10px 16px; border: 0; border-radius: 10px; background: var(--accent);
+                 color: var(--accent-text); font-weight: 600; font-size: 14px; cursor: pointer;
+                 text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+  button:disabled { opacity: .5; cursor: wait; }
+  select { padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line);
+           background: var(--card); color: var(--text); font-size: 14px; max-width: 100%; min-width: 0; }
+  .chips { display: flex; gap: 6px; margin-top: 10px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px; }
+  .msg { margin-top: 20px; padding: 12px 14px; border-radius: 10px; white-space: pre-wrap; }
+  .msg.err { color: var(--err); border: 1px solid var(--err); }
+  .msg.warn { background: var(--warn-bg); color: var(--warn); }
+  .msg.info { color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-top: 20px; }
+  .head { display: flex; gap: 16px; }
+  .head img { width: 200px; max-width: 40%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; background: var(--line); }
+  .head h2 { font-size: 17px; margin: 0 0 4px; word-break: break-word; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .row select { flex: 1; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .tile img, .tile video { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--line); display: block; }
+  .tile .foot { padding: 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .tile .btn { padding: 6px 10px; font-size: 12px; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12px; }
+  .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent;
+             border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 560px) {
+    form { flex-direction: column; }
+    .head { flex-direction: column; } .head img { width: 100%; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Media Grabber</h1>
+  <p class="sub">貼上網址，擷取原生解析度的影片、Shorts、照片與字幕檔。</p>
+
+  <form id="form">
+    <input id="url" type="url" required placeholder="https://www.youtube.com/watch?v=…　/　instagram.com/p/…　/　tiktok.com/@…/video/…">
+    <button id="go" type="submit">解析</button>
+  </form>
+  <div class="chips"><span class="chip">YouTube（影片 / Shorts / 字幕 / 封面）</span><span class="chip">Instagram（貼文 / Reels / 輪播照片）</span><span class="chip">TikTok（影片 / 照片貼文）</span></div>
+
+  <div id="out"></div>
+
+  <footer>僅供下載你擁有權利或已獲授權的內容，請遵守各平台服務條款與著作權法。</footer>
+</main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const out = $('#out');
+const PROXIED = /(cdninstagram\.com|fbcdn\.net|tiktokcdn[\w-]*\.com|tiktokv\.\w+|ibyteimg\.com|byteoversea\.com|muscdn\.com|ytimg\.com|ggpht\.com|googleusercontent\.com)$/i;
+
+function el(tag, attrs = {}, ...children) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of children.flat()) if (c != null) n.append(c);
+  return n;
+}
+const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v != null && v !== '')).toString();
+const proxied = (url, filename, inline) => {
+  try { if (!PROXIED.test(new URL(url).hostname)) return url; } catch { return url; }
+  return '/api/proxy?' + qs({ url, filename, inline: inline ? 'true' : null });
+};
+const fmtDur = (s) => s ? new Date(s * 1000).toISOString().slice(s >= 3600 ? 11 : 14, 19) : '';
+
+function trigger(href) {
+  // 用隱藏 iframe 觸發下載，不打斷目前頁面
+  // 成功時回應是附件（iframe 不會 load 出內容）；失敗時是 JSON，讀出錯誤訊息顯示
+  const f = el('iframe', { src: href, style: 'display:none' });
+  f.addEventListener('load', () => {
+    let text = '';
+    try { text = f.contentDocument?.body?.innerText || ''; } catch { return; }
+    if (!text) return;
+    let msg = text;
+    try { msg = JSON.parse(text).detail || text; } catch {}
+    out.prepend(el('div', { class: 'msg err' }, '下載失敗：' + msg));
+  });
+  document.body.append(f);
+  setTimeout(() => f.remove(), 10 * 60 * 1000);
+}
+
+function pendingButton(btn, text) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = ''; btn.append(el('span', { class: 'spinner' }), ' ' + text);
+  btn.disabled = true;
+  setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 8000);
+}
+
+function renderItem(data, item) {
+  const card = el('div', { class: 'card' });
+  const thumb = item.thumbnail ? el('img', { src: proxied(item.thumbnail, 'thumb.jpg', true), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }) : null;
+  card.append(el('div', { class: 'head' }, thumb,
+    el('div', {},
+      el('h2', {}, item.index ? `#${item.index}　${item.title || ''}` : (item.title || data.title || '')),
+      el('div', { class: 'meta' }, [data.uploader, fmtDur(item.duration)].filter(Boolean).join(' · ')))));
+
+  if (item.videos.length) {
+    const sel = el('select', {}, item.videos.map(v => el('option', { value: v.selector }, v.label)));
+    const btn = el('button', { type: 'button', onclick: () => {
+      trigger('/api/download?' + qs({ url: data.url, fmt: sel.value, item: item.index }));
+      pendingButton(btn, '伺服器處理中…');
+    } }, '下載影片');
+    const rows = [el('div', { class: 'row' }, sel, btn)];
+    if (item.audio) {
+      const abtn = el('button', { type: 'button', class: 'btn secondary', onclick: () => {
+        trigger('/api/download?' + qs({ url: data.url, fmt: item.audio.selector, item: item.index }));
+        pendingButton(abtn, '處理中…');
+      } }, '只下載音訊');
+      rows.push(el('div', { class: 'row' }, el('span', { class: 'meta' }, item.audio.label), abtn));
+    }
+    card.append(el('div', { class: 'section' }, el('h3', {}, '影片'), rows,
+      el('div', { class: 'note' }, '高解析度影片需由伺服器下載並合併影音軌（不重新編碼），檔案較大時請稍候。')));
+  }
+
+  if (item.subtitles.length) {
+    const groups = [
+      ['手動字幕（外掛字幕）', item.subtitles.filter(s => !s.auto)],
+      ['自動字幕（原文）', item.subtitles.filter(s => s.auto && !s.translated)],
+      ['自動翻譯字幕', item.subtitles.filter(s => s.auto && s.translated)],
+    ].filter(([, list]) => list.length);
+    const langSel = el('select', {}, groups.map(([label, list]) =>
+      el('optgroup', { label }, list.map(s => el('option', { value: JSON.stringify(s) }, `${s.name} (${s.lang})`)))));
+    const extSel = el('select');
+    const fillExt = () => {
+      const s = JSON.parse(langSel.value);
+      extSel.replaceChildren(el('option', { value: 'srt' }, 'srt（轉換）'), ...s.exts.map(e => el('option', { value: e }, e + '（原始）')));
+    };
+    langSel.addEventListener('change', fillExt); fillExt();
+    const btn = el('button', { type: 'button', onclick: () => {
+      const s = JSON.parse(langSel.value);
+      trigger('/api/subtitle?' + qs({ url: data.url, lang: s.lang, ext: extSel.value, auto: s.auto ? 'true' : null, item: item.index }));
+      pendingButton(btn, '處理中…');
+    } }, '下載字幕');
+    card.append(el('div', { class: 'section' }, el('h3', {}, `字幕（${item.subtitles.filter(s => !s.translated).length} 種）`),
+      el('div', { class: 'row' }, langSel, extSel, btn)));
+  }
+
+  if (item.thumbnail) {
+    const name = `${item.id || 'thumbnail'}_cover.jpg`;
+    card.append(el('div', { class: 'section' }, el('h3', {}, '封面圖'),
+      el('div', { class: 'row' },
+        el('span', { class: 'meta' }, item.thumbnail_size ? `原始尺寸 ${item.thumbnail_size}` : '最高解析度封面'),
+        el('a', { class: 'btn secondary', href: proxied(item.thumbnail, name), download: name, target: '_blank', rel: 'noopener' }, '下載封面'))));
+  }
+  return card;
+}
+
+function renderFiles(files) {
+  const images = files.filter(f => f.kind === 'image').length;
+  const videos = files.length - images;
+  const all = el('button', { type: 'button', class: 'btn secondary', onclick: async () => {
+    for (const f of files) { trigger(proxied(f.url, f.filename)); await new Promise(r => setTimeout(r, 700)); }
+  } }, `全部下載（${files.length}）`);
+  return el('div', { class: 'card' },
+    el('div', { class: 'row', style: 'justify-content:space-between' },
+      el('h2', { style: 'font-size:17px;margin:0' }, `原始檔案：${images} 張照片${videos ? `、${videos} 支影片` : ''}`), all),
+    el('div', { class: 'grid', style: 'margin-top:12px' }, files.map(f => el('div', { class: 'tile' },
+      f.kind === 'image'
+        ? el('img', { src: proxied(f.url, f.filename, true), loading: 'lazy', alt: '', referrerpolicy: 'no-referrer' })
+        : el('video', { src: proxied(f.url, f.filename, true), preload: 'metadata', muted: true, controls: true }),
+      el('div', { class: 'foot' },
+        el('span', {}, f.width && f.height ? `${f.width}×${f.height}` : f.ext.toUpperCase()),
+        el('a', { class: 'btn', href: proxied(f.url, f.filename), download: f.filename }, '下載'))))));
+}
+
+$('#form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const url = $('#url').value.trim();
+  const go = $('#go');
+  go.disabled = true; go.textContent = '解析中…';
+  out.replaceChildren(el('div', { class: 'msg info' }, el('span', { class: 'spinner' }), ' 正在解析網址…'));
+  try {
+    const res = await fetch('/api/info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : `解析失敗（HTTP ${res.status}）`);
+    out.replaceChildren();
+    if (data.warning) out.append(el('div', { class: 'msg warn' }, data.warning));
+    for (const item of data.items) out.append(renderItem(data, item));
+    if (data.files?.length) out.append(renderFiles(data.files));
+  } catch (err) {
+    out.replaceChildren(el('div', { class: 'msg err' }, err.message));
+  } finally {
+    go.disabled = false; go.textContent = '解析';
+  }
+});
+</script>
+</body>
+</html>
