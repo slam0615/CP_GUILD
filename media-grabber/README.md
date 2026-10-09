@@ -17,7 +17,19 @@
 - 字幕可下載平台原始格式（vtt / srv3 / json3 / ttml…），或由 ffmpeg 轉成 **srt**。
 - 圖片與直連影片經由 `/api/proxy` 轉發（加上正確 Referer、強制以附件下載），只允許三個平台的 CDN 網域。
 
-## 本機執行
+## 一鍵啟動（建議）
+
+1. 下載這個資料夾（GitHub 分支頁面 → Code → Download ZIP，解壓縮後進入 `media-grabber`）
+2. 依系統雙擊：
+   - **Windows**：`start-windows.bat`
+   - **macOS**：`start-mac.command`（第一次若被擋，請右鍵 → 打開）
+3. 第一次會自動安裝 Python 套件 / ffmpeg / deno（Windows 用 winget，Mac 用 Homebrew），
+   並在 **桌面建立「Media Grabber」捷徑**，之後雙擊桌面捷徑即可。
+4. 伺服器啟動後會自動打開瀏覽器 http://127.0.0.1:8000 ，使用期間請保持黑色視窗開啟。
+
+把 `cookies.txt` 放在 `media-grabber` 資料夾裡，啟動檔會自動使用（Instagram 需要）。
+
+## 手動執行
 
 需要 Python 3.10+、ffmpeg，以及 deno 或 Node.js 20+（yt-dlp 解 YouTube 簽章用）。
 
